@@ -26,13 +26,5 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Ruta pentru webhook-ul Telegram
-//Route::post('/telegram/webhook/micronote12341234', function (Request $request) {
-//    // Pentru moment, doar loghează request-ul să vezi dacă ajunge aici
-//    Log::info('intru pe aici');
-//    Log::info('Telegram Webhook Received:',$request->all());
-//    // Răspunde rapid pentru a nu bloca Telegram
-//    return response()->json(['status' => 'ok']);
-//});
 
 require __DIR__.'/auth.php';

@@ -11,6 +11,7 @@ class IncomingMessage extends Model
 {
     /** @use HasFactory<IncomingMessageFactory> */
     use HasFactory;
+    public const SOURCE_TYPE_TELEGRAM = 'telegram';
 
     public $timestamps = false;
 
