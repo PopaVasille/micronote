@@ -5,6 +5,7 @@ namespace App\Services\Classification;
 use App\Models\Note;
 use App\Models\SystemSetting;
 use Illuminate\Support\Facades\Log;
+use Normalizer;
 
 class MessageClassificationService
 {
@@ -21,11 +22,13 @@ class MessageClassificationService
             $regexPatterns = SystemSetting::where('key_name', 'regex_patterns')
                 ->value('json_value');
 
+            //$messageContent = $this->normalizeString($messageContent);
+
             // Dacă regexPatterns este null sau nu poate fi decodat, folosim valori implicite
             if ($regexPatterns === null) {
                 Log::warning('Nu s-au găsit pattern-uri regex în setările sistemului. Se folosesc valori implicite.');
                 $patterns = [
-                    'task' => '/\b(task|todo|reminder|de (facut|făcut)|trebuie să|nu uita|amintește)\b/i',
+                    'task' => '#\b(task|todo|reminder|de (facut|făcut|facut)|trebuie (sa|să|s[aă])|nu uita|aminteste|amintește)\b#i',
                     'idea' => '/\b(idee|idea|concept|brainstorm|gandesc la|gândesc la|ar fi (bine|misto))\b/i',
                     'shopping' => '/\b(cumpără|cumparaturi|cumpărături|lista|magazin)\b/i',
                 ];
@@ -40,7 +43,7 @@ class MessageClassificationService
                 $patterns = [];
                 foreach ($decodedPatterns as $key => $pattern) {
                     // Convertim formatul din JSON în formatul cerut de preg_match
-                    $patterns[$key] = '/' . $pattern . '/i';
+                    $patterns[$key] = '/' . $pattern . '/iu';
                 }
             }
 
@@ -65,4 +68,10 @@ class MessageClassificationService
             return Note::TYPE_SIMPLE;
         }
     }
+//    private function normalizeString(string $str): string
+//    {
+//        // Normalizăm la forma NFKC (compatibilitate compusă)
+//        return Normalizer::normalize($str, Normalizer::FORM_KC);
+//    }
+
 }
