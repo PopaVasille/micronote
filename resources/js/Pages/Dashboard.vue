@@ -28,9 +28,9 @@
       }
   };
 
-  // onMounted(() => {
-  //     fetchNotes();
-  // });
+  onMounted(() => {
+      fetchNotes();
+  });
 
   // Toggle pentru sidebar pe mobile
   const toggleSidebar = () => {

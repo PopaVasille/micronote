@@ -20,6 +20,7 @@ class NoteController extends Controller
     {
         $user = $request->user();
         $notes = $this->noteRepository->getAllByUserId($user->id);
+        Log::info('$notes: '. $notes);
 
         // Pentru filtrare opțională după tip
         $filter = $request->query('filter');

@@ -14,8 +14,8 @@ Route::post('/telegram/webhook/micronote12341234', [IncomingMessageController::c
 
 Route::middleware('auth:sanctum')->group(function () {
     // Listarea notițelor utilizatorului
-    Route::get('/notes', [NoteController::class, 'index'])
-        ->name('api.notes.index');
+    Route::get('/notes', [NoteController::class, 'dashboard'])
+        ->name('api.notes.dashboard');
 
     // Crearea unei noi notițe
     Route::post('/notes', [NoteController::class, 'store'])
