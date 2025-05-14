@@ -67,12 +67,9 @@ class NoteController extends Controller
         // Incrementăm contorul de notițe al utilizatorului
         $user->increment('notes_count');
 
-        // Returnăm un răspuns Inertia - redirect către dashboard cu informații în sesiune
-        return Inertia::render('Dashboard', [
-            'notes' => $this->noteRepository->getAllByUserId($request->user()->id),
-            'filter' => 'all',
-            'success' => 'Notiță creată cu succes'
-        ]);
+        // Redirect către dashboard cu un mesaj de succes
+        return redirect()->route('dashboard')
+        ->with('success', 'Notiță creată cu succes!');
     }
 
     /**

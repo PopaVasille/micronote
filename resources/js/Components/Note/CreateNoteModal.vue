@@ -39,12 +39,13 @@ const createNote = async () => {
 
     router.post(route('notes.store'), form.value, {
         preserveState: true,
-        onSuccess: () => {
+        preserveScroll: true,
+        onSuccess: (page) => {
             emit('noteCreated');
             closeModal();
         },
-        onError: (errors) => {
-            errors.value = errors;
+        onError: (errs) => {
+            errors.value = errs;
         },
         onFinish: () => {
             isSubmitting.value = false;

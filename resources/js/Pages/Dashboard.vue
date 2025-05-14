@@ -1,36 +1,51 @@
 <script setup>
   //import Layout from '@/Layouts/GuestLayout'
-  import { Head } from '@inertiajs/vue3'
-  import { ref, onMounted } from 'vue';
-  import { router } from '@inertiajs/vue3';
+  import { Head, router, usePage } from '@inertiajs/vue3';
+  import { ref, onMounted, computed } from 'vue';
   import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
   import CreateNoteModal from '@/Components/Note/CreateNoteModal.vue'
 
   // State pentru notițe și filtre
-  const notes = ref([]);
   const isLoading = ref(true);
   const currentFilter = ref('all');
   const searchQuery = ref('');
   const showSidebar = ref(true); // Pentru mobile
   const showCreateModal = ref(false); // State pentru modal
+  const page = usePage();
 
+  // Facem `notes` o proprietate calculată (computed) care reacționează la schimbările din `page.props.notes`
+  const notes = computed(() => page.props.notes || []);
   // Încărcarea notițelor
   const fetchNotes = async (filter = 'all') => {
-      isLoading.value = true;
-      router.get(route('dashboard'), { filter: filter }, {
-          preserveState: true,
-          onSuccess: (page) => {
-              notes.value = page.props.notes || [];
-              currentFilter.value = filter;
-              isLoading.value = false;
-          }
-      });
-  };
+    isLoading.value = true;
+    router.get(route('dashboard'), { filter: filter }, {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+        onSuccess: (updatedPage) => {
+            currentFilter.value = updatedPage.props.filter || filter; // Actualizăm filtrul curent
+            isLoading.value = false;
+        },
+        onError: () => {
+            isLoading.value = false;
+            console.error('A apărut o eroare la încărcarea notițelor.');
+        }
+    });
+};
 
   onMounted(() => {
-    console.log('Notes received:', notes);
-      fetchNotes();
-  });
+    // Verificăm dacă notițele sunt deja încărcate prin props-urile inițiale ale paginii
+    if (page.props.notes && page.props.notes.length > 0) {
+        isLoading.value = false;
+    } else if (!page.props.notes) { // Dacă `page.props.notes` nu există deloc
+        fetchNotes(currentFilter.value); // Încărcăm notițele
+    } else { // `page.props.notes` există dar e gol
+         isLoading.value = false;
+    }
+    // Debugging: Afișează notițele inițiale
+    console.log('Dashboard mounted. Initial page.props.notes:', page.props.notes);
+    console.log('Initial computed notes.value:', notes.value);
+});
 
   // Toggle pentru sidebar pe mobile
   const toggleSidebar = () => {
@@ -43,17 +58,15 @@
       return date.toLocaleDateString('ro-RO', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
-  // Handler pentru creare notă nouă
-  const handleNoteCreated = (newNote) => {
-      notes.value.unshift(newNote); // Adaugă notița la începutul listei
-      showCreateModal.value = false; // Închide modalul
-  };
+ // Handler-ul pentru 'noteCreated' este acum responsabil doar pentru închiderea modalului
+const handleNoteCreated = () => {
+    showCreateModal.value = false;
+};
 
   // Deschide modalul pentru crearea unei notițe noi
   const openCreateModal = () => {
       showCreateModal.value = true;
   };
-  defineProps({})
 </script>
 
 <template>
