@@ -326,6 +326,11 @@
             </div>
         </div>
     </AuthenticatedLayout>
+    <CreateNoteModal
+        :show="showCreateModal"
+        @close="showCreateModal = false"
+        @noteCreated="handleNoteCreated"
+    />
 </template>
 
 <style>

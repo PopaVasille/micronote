@@ -38,7 +38,7 @@ const createNote = async () => {
     errors.value = {};
 
     try{
-        const response = await axios.post('/api/notes');
+        const response = await axios.post('/api/notes', form.value);
         emit('noteCreated', response.data.data);
         closeModal();
     }catch(error){
@@ -103,20 +103,20 @@ const createNote = async () => {
                         <!-- Tip notiță -->
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Tip notiță</label>
-                            <div class="flex space-x-2">
-                                <label class="flex items-center space-x-2 border rounded-md px-3 py-2 cursor-pointer" :class="{ 'border-blue-500 bg-blue-50': form.note_type === 'simple' }">
+                            <div class="flex flex-wrap space-x-2">
+                                <label class="flex items-center space-x-2 border rounded-md px-3 py-2 my-2 cursor-pointer" :class="{ 'border-blue-500 bg-blue-50': form.note_type === 'simple' }">
                                     <input type="radio" v-model="form.note_type" value="simple" class="hidden">
                                     <span class="w-3 h-3 rounded-full bg-gray-500"></span>
                                     <span>Simplă</span>
                                 </label>
 
-                                <label class="flex items-center space-x-2 border rounded-md px-3 py-2 cursor-pointer" :class="{ 'border-red-500 bg-red-50': form.note_type === 'task' }">
+                                <label class="flex items-center space-x-2 border rounded-md px-3 py-2 my-2 cursor-pointer" :class="{ 'border-red-500 bg-red-50': form.note_type === 'task' }">
                                     <input type="radio" v-model="form.note_type" value="task" class="hidden">
                                     <span class="w-3 h-3 rounded-full bg-red-500"></span>
                                     <span>Task</span>
                                 </label>
 
-                                <label class="flex items-center space-x-2 border rounded-md px-3 py-2 cursor-pointer" :class="{ 'border-blue-500 bg-blue-50': form.note_type === 'idea' }">
+                                <label class="flex items-center space-x-2 border rounded-md px-3 py-2 my-2 cursor-pointer" :class="{ 'border-blue-500 bg-blue-50': form.note_type === 'idea' }">
                                     <input type="radio" v-model="form.note_type" value="idea" class="hidden">
                                     <span class="w-3 h-3 rounded-full bg-blue-500"></span>
                                     <span>Idee</span>
@@ -126,6 +126,11 @@ const createNote = async () => {
                                     <input type="radio" v-model="form.note_type" value="shopping_list" class="hidden">
                                     <span class="w-3 h-3 rounded-full bg-green-500"></span>
                                     <span>Cumpărături</span>
+                                </label>
+                                <label class="flex items-center space-x-2 border rounded-md px-3 py-2 cursor-pointer" :class="{ 'border-green-500 bg-green-50': form.note_type === 'shopping_list' }">
+                                    <input type="radio" v-model="form.note_type" value="shopping_list" class="hidden">
+                                    <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                                    <span>Cumpărături2</span>
                                 </label>
                             </div>
                         </div>
