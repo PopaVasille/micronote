@@ -1,12 +1,12 @@
 <script setup>
 import {ref} from 'vue';
-import axios from "axios";
+import { router } from '@inertiajs/vue3';
 
 const props = defineProps({
     show: Boolean,
 });
 
-const emit = defineEmits(['close','noteCreated']);
+const emit = defineEmits(['close','noteCreated','fetchNotes']);
 
 const form = ref({
     title: '',
@@ -37,19 +37,19 @@ const createNote = async () => {
     isSubmitting.value = true;
     errors.value = {};
 
-    try{
-        const response = await axios.post('/api/notes', form.value);
-        emit('noteCreated', response.data.data);
-        closeModal();
-    }catch(error){
-        if (error.response && error.response.data && error.response.data.errors) {
-            errors.value = error.response.data.errors;
-        } else {
-            alert('A apărut o eroare la crearea notiței. Încearcă din nou.');
+    router.post(route('notes.store'), form.value, {
+        preserveState: true,
+        onSuccess: () => {
+            emit('noteCreated');
+            closeModal();
+        },
+        onError: (errors) => {
+            errors.value = errors;
+        },
+        onFinish: () => {
+            isSubmitting.value = false;
         }
-    } finally {
-        isSubmitting.value = false;
-    }
+    });
 };
 </script>
 <template>

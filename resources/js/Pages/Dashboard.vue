@@ -2,7 +2,7 @@
   //import Layout from '@/Layouts/GuestLayout'
   import { Head } from '@inertiajs/vue3'
   import { ref, onMounted } from 'vue';
-  import axios from 'axios';
+  import { router } from '@inertiajs/vue3';
   import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
   import CreateNoteModal from '@/Components/Note/CreateNoteModal.vue'
 
@@ -17,15 +17,14 @@
   // Încărcarea notițelor
   const fetchNotes = async (filter = 'all') => {
       isLoading.value = true;
-      try {
-          const response = await axios.get(`/api/notes?filter=${filter}`);
-          notes.value = response.data.notes;
-          currentFilter.value = filter;
-      } catch (error) {
-          console.error('Eroare la încărcarea notițelor:', error);
-      } finally {
-          isLoading.value = false;
-      }
+      router.get(route('dashboard'), { filter: filter }, {
+          preserveState: true,
+          onSuccess: (page) => {
+              notes.value = page.props.notes || [];
+              currentFilter.value = filter;
+              isLoading.value = false;
+          }
+      });
   };
 
   onMounted(() => {

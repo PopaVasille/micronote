@@ -6,6 +6,7 @@ use App\Models\Note;
 use App\Repositories\Note\Contracts\NoteRepositoryInterface;
 use App\Services\Classification\MessageClassificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class NoteController extends Controller
@@ -19,17 +20,17 @@ class NoteController extends Controller
     public function dashboard(Request $request)
     {
         $user = $request->user();
-        $notes = $this->noteRepository->getAllByUserId($user->id);
-        Log::info('$notes: '. $notes);
+        $filter = $request->query('filter', 'all');
 
-        // Pentru filtrare opțională după tip
-        $filter = $request->query('filter');
-        if ($filter) {
-            $filteredNotes = $this->noteRepository->getByUserIdAndType($user->id, $filter);
-            $notes = $filteredNotes;
-        }
+        $notes = match($filter) {
+            'all' => $this->noteRepository->getAllByUserId($user->id),
+            default => $this->noteRepository->getByUserIdAndType($user->id, $filter)
+        };
 
-        return response()->json([
+        Log::info('$user: '.$user);
+        Log::info('$notes: '.$notes);
+
+        return Inertia::render('Dashboard', [
             'notes' => $notes,
             'filter' => $filter
         ]);
