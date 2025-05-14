@@ -52,10 +52,8 @@ class NoteController extends Controller
 
         // Verificăm limita de notițe pentru utilizatorii free
         if ($user->plan === 'free' && $user->notes_count >= $user->monthly_notes_limit) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Ai atins limita de notițe pentru contul free. Actualizează la planul Plus pentru notițe nelimitate.'
-            ], 403); // 403 Forbidden
+            return redirect()->back()
+                ->with('error', 'Ai atins limita de notițe pentru contul free. Actualizează la planul Plus pentru notițe nelimitate.');
         }
 
         if (!isset($validated['note_type']) || $validated['note_type'] === 'simple') {
@@ -69,14 +67,12 @@ class NoteController extends Controller
         // Incrementăm contorul de notițe al utilizatorului
         $user->increment('notes_count');
 
-        // Returnăm răspuns JSON în loc de redirect
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Notiță creată cu succes',
-            'data' => $note,
-            'notes_count' => $user->notes_count,
-            'notes_limit' => $user->monthly_notes_limit
-        ], 201); // 201 Created - status code specific pentru resurse create
+        // Returnăm un răspuns Inertia - redirect către dashboard cu informații în sesiune
+        return Inertia::render('Dashboard', [
+            'notes' => $this->noteRepository->getAllByUserId($request->user()->id),
+            'filter' => 'all',
+            'success' => 'Notiță creată cu succes'
+        ]);
     }
 
     /**

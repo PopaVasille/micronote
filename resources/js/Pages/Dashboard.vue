@@ -28,6 +28,7 @@
   };
 
   onMounted(() => {
+    console.log('Notes received:', notes);
       fetchNotes();
   });
 
@@ -292,7 +293,7 @@
                     <!-- Notes Grid -->
                     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <!-- Note Card - Task -->
-                        <div v-for="note in notes" :key="note.id" class="p-4 rounded-lg bg-white border border-gray-200 hover:shadow-md transition-shadow cursor-pointer">
+                        <div v-for="(note, index) in notes" :key="note?.id || index" v-if="notes" class="p-4 rounded-lg bg-white border border-gray-200 hover:shadow-md transition-shadow cursor-pointer">
                             <div class="flex items-center justify-between mb-2">
                                 <div class="flex items-center">
                                     <span :class="[
