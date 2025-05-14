@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Telegram\TelegramAccountController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
@@ -22,6 +23,12 @@ Route::get('/', function () {
 //})->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    //telegram Connect
+    Route::get('/telegram/connect', [TelegramAccountController::class, 'showConnectForm'])
+        ->name('telegram.connect');
+    Route::post('/telegram/connect', [TelegramAccountController::class, 'connect'])
+        ->name('telegram.store');
+    //dashboard
     Route::get('/dashboard', [NoteController::class, 'dashboard'])->name('dashboard');
     Route::post('/notes', [NoteController::class, 'store'])->name('notes.store');
     // Adaugă și celelalte rute

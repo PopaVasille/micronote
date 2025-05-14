@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\IncomingMessageController;
 use App\Http\Controllers\NoteController;
+use App\Http\Controllers\Telegram\TelegramBotController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -11,6 +12,10 @@ Route::get('/user', function (Request $request) {
 
 // Ruta pentru webhook-ul Telegram
 Route::post('/telegram/webhook/micronote12341234', [IncomingMessageController::class, 'handleTelegramWebhook']);
+
+// routes/api.php
+Route::post('/telegram/webhook/bot', [TelegramBotController::class, 'handleWebhook'])->name('telegram.webhook');
+Route::get('/telegram/setwebhook', [TelegramBotController::class, 'setWebhook']);
 
 Route::middleware('auth:sanctum')->group(function () {
     // Listarea notițelor utilizatorului

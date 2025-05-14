@@ -14,6 +14,8 @@ readonly class IncomingTelegramMessageProcessorService
 {
     /**
      * @param  IncomingMessageRepositoryInterface  $incomingMessageRepository
+     * @param  NoteRepositoryInterface  $noteRepository
+     * @param  MessageClassificationService  $classificationService
      */
     public function __construct(
         public IncomingMessageRepositoryInterface $incomingMessageRepository,
@@ -43,9 +45,10 @@ readonly class IncomingTelegramMessageProcessorService
         Log::info('$messageDate: ' . $messageDate);
 
         try {
-
             $user = User::where('telegram_id', $senderIdentifier)->first();
             $userId = $user?->id;
+            Log::info('$userId: ' . $userId);
+            if($user){
             $noteType = $this->classificationService->classifyMessage($messageContent);
             Log::info("Mesajul a fost clasificat ca: $noteType");
             $incomingMessage = $this->incomingMessageRepository->create([
@@ -61,14 +64,13 @@ readonly class IncomingTelegramMessageProcessorService
 
             Log::info('Mesaj Telegram salvat în baza de date de către Repo prin service->interface.', ['message_id' => $incomingMessage->id]);
 
+            //ToDo: de facut cu AI titlu
+            $noteTitle = Str::limit($messageContent, 20);
             // Aici, mai târziu, vom adăuga logica de:
             // - Găsire/Creare utilizator după $senderIdentifier
             // - Asociere user_id la $incomingMessage
             // - Trimitere mesajul spre procesare (identificare tip notiță, extragere metadate, etc.)
             // Dacă am găsit un user, creăm și notița
-            if ($userId) {
-                //todo: de facut cu ai title
-                $noteTitle = Str::limit($messageContent, 20, ''); // Primele 50 caractere ca titlu
 
                 // Creăm notița
                 $note = $this->noteRepository->create([
@@ -79,17 +81,16 @@ readonly class IncomingTelegramMessageProcessorService
                     'note_type' => $noteType,
                     'created_at' => $messageDate ? date('Y-m-d H:i:s', $messageDate) : now(),
                 ]);
-
+                $user->increment('notes_count');
                 // Putem adăuga și tag-ul corespunzător, dar asta vom face mai târziu
 
                 Log::info('Notiță creată cu succes', ['note_id' => $note->id]);
+
+                return $incomingMessage->id;
             } else {
-                Log::info('Nu s-a găsit un utilizator pentru acest Telegram ID. Se salvează doar mesajul.');
+                Log::info('Nu s-a găsit un utilizator pentru ID-ul Telegram: ' . $senderIdentifier);;
+                return null;
             }
-
-            Log::info('Mesaj Telegram salvat în baza de date.', ['message_id' => $incomingMessage->id]);
-
-            return $incomingMessage->id;
 
         } catch (\Exception $e) {
             Log::error('Error saving Telegram message in Service:', [
