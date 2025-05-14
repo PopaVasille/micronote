@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Telegram;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\IncomingMessageController;
 use Telegram\Bot\Api;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -26,7 +27,7 @@ class TelegramBotController extends Controller
     public function handleWebhook(Request $request)
     {
         $update = $this->telegram->getWebhookUpdate();
-
+        Log::info('intru prin webhook: '.json_encode($update));
 // Verificăm dacă este o comandă /start
         if (isset($update['message']['text']) && $update['message']['text'] === '/start') {
             $telegramId = $update['message']['from']['id'];
@@ -39,6 +40,13 @@ class TelegramBotController extends Controller
             ]);
         }
 
+        // Apelează și serviciul de procesare a mesajelor
+        // Doar mesajele care nu sunt comenzi (pentru a evita duplicările)
+        if (isset($update['message']['text']) && $update['message']['text'] !== '/start') {
+            $incomingMessageController = app(IncomingMessageController::class);
+            $incomingMessageController->handleTelegramWebhook($request);
+        }
+        Log::info('ies din webhook: '.json_encode($update));
         return response()->json(['status' => 'success']);
     }
 
