@@ -33,6 +33,8 @@ class NoteController extends Controller
         return Inertia::render('Dashboard', [
             'notes' => $notes,
             'filter' => $filter
+        ])->withViewData([
+            'cache-control' => 'max-age=60, must-revalidate' // Cache pentru 60 secunde, dar trebuie revalidat
         ]);
     }
 
@@ -66,6 +68,15 @@ class NoteController extends Controller
 
         // Incrementăm contorul de notițe al utilizatorului
         $user->increment('notes_count');
+
+        // Răspuns diferit pentru API vs. web
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'note' => $note,
+                'message' => 'Notiță creată cu succes!'
+            ]);
+        }
 
         // Redirect către dashboard cu un mesaj de succes
         return redirect()->route('dashboard')

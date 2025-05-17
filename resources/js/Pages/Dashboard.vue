@@ -1,9 +1,10 @@
 <script setup>
   //import Layout from '@/Layouts/GuestLayout'
   import { Head, router, usePage } from '@inertiajs/vue3';
-  import { ref, onMounted, computed } from 'vue';
+  import { ref, onMounted, computed, onBeforeUnmount } from 'vue';
   import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-  import CreateNoteModal from '@/Components/Note/CreateNoteModal.vue'
+  import CreateNoteModal from '@/Components/Note/CreateNoteModal.vue';
+  import offlineStorage from '@/utils/offlineStorage';
 
   // State pentru notițe și filtre
   const isLoading = ref(true);
@@ -12,9 +13,31 @@
   const showSidebar = ref(true); // Pentru mobile
   const showCreateModal = ref(false); // State pentru modal
   const page = usePage();
-
+const isOffline = ref(false);
+  const hasPendingChanges = ref(false);
   // Facem `notes` o proprietate calculată (computed) care reacționează la schimbările din `page.props.notes`
   const notes = computed(() => page.props.notes || []);
+
+  // Adaugă această funcție pentru a monitoriza starea conexiunii
+  const updateOnlineStatus = async () => {
+    isOffline.value = !navigator.onLine;
+
+    // Verifică dacă există notițe în așteptare când revenim online
+    if (navigator.onLine) {
+      hasPendingChanges.value = await offlineStorage.hasPendingNotes();
+      if (hasPendingChanges.value) {
+        // Declanșează sincronizarea
+        if ('serviceWorker' in navigator && 'SyncManager' in window) {
+          const registration = await navigator.serviceWorker.ready;
+          await registration.sync.register('syncNotes');
+
+          // Reîmprospătează notițele după o scurtă întârziere pentru a permite sincronizarea să se finalizeze
+          setTimeout(() => fetchNotes(currentFilter.value), 1000);
+        }
+      }
+    }
+  };
+
   // Încărcarea notițelor
   const fetchNotes = async (filter = 'all') => {
     isLoading.value = true;
@@ -42,10 +65,22 @@
     } else { // `page.props.notes` există dar e gol
          isLoading.value = false;
     }
+
+    // Adaugă evenimentele pentru monitorizarea stării online/offline
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+
     // Debugging: Afișează notițele inițiale
     console.log('Dashboard mounted. Initial page.props.notes:', page.props.notes);
     console.log('Initial computed notes.value:', notes.value);
 });
+
+  // Adaugă această funcție pentru a elimina evenimentele la demontatarea componentei
+  onBeforeUnmount(() => {
+    window.removeEventListener('online', updateOnlineStatus);
+    window.removeEventListener('offline', updateOnlineStatus);
+  });
 
   // Toggle pentru sidebar pe mobile
   const toggleSidebar = () => {
@@ -61,7 +96,9 @@
  // Handler-ul pentru 'noteCreated' este acum responsabil doar pentru închiderea modalului
 const handleNoteCreated = () => {
     showCreateModal.value = false;
-};
+    // După crearea unei notițe, actualizează lista
+    setTimeout(() => fetchNotes(currentFilter.value), 500);
+  };
 
   // Deschide modalul pentru crearea unei notițe noi
   const openCreateModal = () => {
@@ -87,6 +124,23 @@ const handleNoteCreated = () => {
                 Conectează Telegram acum
               </a>
             </p>
+          </div>
+        </div>
+      </div>
+      <!-- banner pentru starea online/offline -->
+      <div v-if="isOffline || hasPendingChanges" class="bg-gray-100 border-l-4 border-yellow-500 p-4 mb-4">
+        <div class="flex items-center">
+          <div v-if="isOffline" class="flex items-center text-yellow-700">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            <span>Ești offline. Poți crea notițe care vor fi sincronizate automat când revii online.</span>
+          </div>
+          <div v-else-if="hasPendingChanges" class="flex items-center text-yellow-700">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+            </svg>
+            <span>Sincronizare în curs... Unele notițe create offline sunt în curs de sincronizare.</span>
           </div>
         </div>
       </div>

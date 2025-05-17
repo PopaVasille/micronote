@@ -9,6 +9,19 @@ import Test from './Components/test.vue';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
+// Înregistrare Service Worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/serviceworker.js')
+            .then(registration => {
+                console.log('ServiceWorker înregistrat cu succes:', registration.scope);
+            })
+            .catch(error => {
+                console.log('Înregistrarea ServiceWorker a eșuat:', error);
+            });
+    });
+}
+
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: (name) =>
