@@ -1,5 +1,10 @@
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
+    ExpiresActive On
+        ExpiresByType image/png "access plus 1 month"
+        <FilesMatch "\.(png)$">
+            Header set Cache-Control "max-age=2592000, public"
+        </FilesMatch>
         Options -MultiViews -Indexes
     </IfModule>
 

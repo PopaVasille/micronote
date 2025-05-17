@@ -1,19 +1,21 @@
 // public/serviceworker.js
 const CACHE_NAME = 'micronote-v1';
-const staticResources = [
+const coreCacheResources = [
     '/',
     '/dashboard',
     '/css/app.css',
     '/js/app.js',
-    '/manifest.json',
-    '/icons/icon-72x72.png',
-    '/icons/icon-96x96.png',
-    '/icons/icon-128x128.png',
-    '/icons/icon-144x144.png',
-    '/icons/icon-152x152.png',
-    '/icons/icon-192x192.png',
-    '/icons/icon-384x384.png',
-    '/icons/icon-512x512.png'
+    '/manifest.json'
+];
+const iconResources = [
+    '/icons/micronote-icon72x72.png',
+    '/icons/micronote-icon96x96.png',
+    '/icons/micronote-icon128x128.png',
+    '/icons/micronote-icon144x144.png',
+    '/icons/micronote-icon152x152.png',
+    '/icons/micronote-icon192x192.png',
+    '/icons/micronote-icon384x384.png',
+    '/icons/micronote-icon512x512.png',
 ];
 // Resurse dinamice care vor fi actualizate frecvent
 const dynamicResources = [
@@ -25,7 +27,7 @@ self.addEventListener('install', event => {
         caches.open(CACHE_NAME)
             .then(cache => {
                 console.log('Cache deschis');
-                return cache.addAll(staticResources);
+                return cache.addAll(coreCacheResources);
             })
             .then(() => self.skipWaiting()) // Forțează Service Worker-ul să devină activ imediat
     );
@@ -49,17 +51,48 @@ self.addEventListener('fetch', event => {
     if (event.request.method !== 'GET') {
         return;
     }
-
     // Exclude cererile către API care modifică date (POST, PUT, DELETE)
     if (event.request.url.includes('/api/') && !dynamicResources.some(resource => event.request.url.includes(resource))) {
         return;
     }
+// Strategie specială pentru iconițe
+    const isIconRequest = iconResources.some(icon =>
+        event.request.url.includes(icon) ||
+        event.request.url.includes('/icons/')
+    );
+    if (isIconRequest) {
+        event.respondWith(
+            caches.match(event.request)
+                .then(cachedResponse => {
+                    if (cachedResponse) {
+                        return cachedResponse; // Returnează din cache dacă există
+                    }
 
+                    return fetch(event.request)
+                        .then(response => {
+                            // Clonăm răspunsul pentru a-l putea folosit și pentru cache
+                            const responseToCache = response.clone();
+
+                            if (response.status === 200) {
+                                caches.open(CACHE_NAME)
+                                    .then(cache => {
+                                        // Punem în cache pentru utilizări viitoare
+                                        cache.put(event.request, responseToCache);
+                                        console.log('Icon cached:', event.request.url);
+                                    });
+                            }
+
+                            return response;
+                        });
+                })
+        );
+        return; // Important: returnăm aici pentru a nu executa restul codului
+    }
     event.respondWith(
         caches.match(event.request)
             .then(cachedResponse => {
                 // Cache First Strategy pentru resurse statice
-                if (cachedResponse && staticResources.some(resource => event.request.url.includes(resource))) {
+                if (cachedResponse && coreCacheResources.some(resource => event.request.url.includes(resource))) {
                     return cachedResponse;
                 }
 
@@ -76,7 +109,6 @@ self.addEventListener('fetch', event => {
                                     cache.put(event.request, responseToCache);
                                 });
                         }
-
                         return response;
                     })
                     .catch(() => {
