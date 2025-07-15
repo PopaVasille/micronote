@@ -32,6 +32,16 @@ class EloquentNoteRepository implements NoteRepositoryInterface
             ->get();
     }
 
+    public function getFavoriteByUserId(int $userId): Collection
+    {
+        return $this->note->where('user_id', $userId)
+            ->where('is_favorite', true)
+            ->whereNull('deleted_at')
+            ->orderBy('created_at', 'desc')
+            ->with('tags')
+            ->get();
+    }
+
     /**
      * @param  int  $userId
      * @param  string  $noteType

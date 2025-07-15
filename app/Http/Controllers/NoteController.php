@@ -24,6 +24,7 @@ class NoteController extends Controller
 
         $notes = match($filter) {
             'all' => $this->noteRepository->getAllByUserId($user->id),
+            'favorite' => $this->noteRepository->getFavoriteByUserId($user->id),
             default => $this->noteRepository->getByUserIdAndType($user->id, $filter)
         };
 
@@ -88,6 +89,7 @@ class NoteController extends Controller
      */
     public function update(Request $request, Note $note)
     {
+        Log::info('ajung aici?');
         // Verificăm că utilizatorul este proprietarul notiței
         $this->authorize('update', $note);
 
@@ -128,5 +130,51 @@ class NoteController extends Controller
     public function destroy(Note $note)
     {
         //
+    }
+    public function toggleFavorite(Request $request, Note $note)
+    {
+        Log::info('Toggle favorite pentru notița: ' . $note->id, [
+            'user_id' => auth()->id(),
+            'note_user_id' => $note->user_id,
+            'current_favorite' => $note->is_favorite
+        ]);
+
+        // Verifică că utilizatorul este proprietarul notiței
+        if ($note->user_id !== auth()->id()) {
+            abort(403, 'Nu ai permisiunea să modifici această notiță');
+        }
+
+        // Toggle favorite
+        $note->update([
+            'is_favorite' => !$note->is_favorite
+        ]);
+
+        Log::info('Favorite toggleat cu succes', [
+            'note_id' => $note->id,
+            'new_favorite_status' => $note->is_favorite
+        ]);
+
+        // Returnează back cu mesaj de succes
+        return back()->with('success', 'Notiță actualizată cu succes');
+    }
+
+    /**
+     * Toggle completed status pentru task-uri
+     */
+    public function toggleCompleted(Request $request, Note $note)
+    {
+        Log::info('Toggle completed pentru notița: ' . $note->id);
+
+        // Verifică că utilizatorul este proprietarul notiței
+        if ($note->user_id !== auth()->id()) {
+            abort(403, 'Nu ai permisiunea să modifici această notiță');
+        }
+
+        // Toggle completed
+        $note->update([
+            'is_completed' => !$note->is_completed
+        ]);
+
+        return back()->with('success', 'Status task actualizat cu succes');
     }
 }

@@ -31,7 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('api.notes.show');
 
     // Actualizarea parțială a unei notițe (PATCH este recomandat pentru actualizări parțiale)
-    Route::patch('/notes/{note}', [NoteController::class, 'update'])
+    Route::post('/notes/update/{note}', [NoteController::class, 'update'])
         ->name('api.notes.update');
 
     // Ștergerea unei notițe

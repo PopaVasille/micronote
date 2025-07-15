@@ -31,6 +31,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //dashboard
     Route::get('/dashboard', [NoteController::class, 'dashboard'])->name('dashboard');
     Route::post('/notes', [NoteController::class, 'store'])->name('notes.store');
+    //notes
+    Route::post('/notes/{note}/toggle-favorite', [NoteController::class, 'toggleFavorite'])
+        ->name('notes.toggle-favorite');
+    Route::post('/notes/{note}/toggle-completed', [NoteController::class, 'toggleCompleted'])
+        ->name('notes.toggle-completed');
     // Adaugă și celelalte rute
 });
 
