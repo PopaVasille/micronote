@@ -25,6 +25,7 @@ class NoteController extends Controller
         $notes = match($filter) {
             'all' => $this->noteRepository->getAllByUserId($user->id),
             'favorite' => $this->noteRepository->getFavoriteByUserId($user->id),
+            'completed' => $this->noteRepository->getCompletedByUserId($user->id),
             default => $this->noteRepository->getByUserIdAndType($user->id, $filter)
         };
 

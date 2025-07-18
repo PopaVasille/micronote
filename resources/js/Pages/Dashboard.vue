@@ -254,6 +254,14 @@ const handleNoteCreated = () => {
                                 <span class="ml-2">Liste de Cumpărături</span>
                             </a>
                         </li>
+                        <li>
+                            <a href="#" @click.prevent="fetchNotes('completed')" :class="[currentFilter === 'completed' ? 'bg-gray-200' : 'hover:bg-gray-100', 'flex items-center py-2 px-3 rounded-lg']">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span class="ml-2">Finalizate</span>
+                            </a>
+                        </li>
                     </ul>
                 </nav>
 
@@ -320,7 +328,16 @@ const handleNoteCreated = () => {
                                 <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
                             </svg>
                         </button>
-                        <h2 class="text-lg font-semibold">{{ currentFilter === 'all' ? 'Toate notițele' : (currentFilter === 'favorite' ? 'Favorite' : (currentFilter === 'reminder' ? 'Remindere' : currentFilter)) }}</h2>
+                        <h2 class="text-lg font-semibold">{{
+                                currentFilter === 'all' ? 'Toate notițele' :
+                                    currentFilter === 'favorite' ? 'Favorite' :
+                                        currentFilter === 'completed' ? 'Finalizate' :
+                                            currentFilter === 'reminder' ? 'Remindere' :
+                                                currentFilter === 'task' ? 'Task-uri' :
+                                                    currentFilter === 'idea' ? 'Idei' :
+                                                        currentFilter === 'shopping_list' ? 'Liste de cumpărături' :
+                                                            currentFilter === 'event' ? 'Evenimente' :
+                                                                currentFilter }}</h2>
                     </div>
                     <div class="flex items-center space-x-3">
                         <button class="flex items-center text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 py-1 px-3 rounded">
@@ -363,6 +380,12 @@ const handleNoteCreated = () => {
                             <span class="w-2 h-2 rounded-full bg-green-500 mr-1"></span>
                             Cumpărături
                         </button>
+                        <button @click="fetchNotes('completed')" :class="[currentFilter === 'completed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-700', 'py-1 px-3 rounded text-sm flex items-center']">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            </svg>
+                            Finalizate
+                        </button>
                         <div class="ml-auto">
                             <button class="flex items-center text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 py-1 px-3 rounded">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -394,46 +417,84 @@ const handleNoteCreated = () => {
 
                     <!-- Notes Grid -->
                     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <!-- Note Card - Task -->
+                        <!-- Note Card -->
                         <div v-for="(note, index) in notes" :key="note?.id || index" v-if="notes" class="p-4 rounded-lg bg-white border border-gray-200 hover:shadow-md transition-shadow cursor-pointer">
                             <div class="flex items-center justify-between mb-2">
                                 <div class="flex items-center">
-                                    <span :class="[
-                                        'w-3 h-3 rounded-full',
-                                        note.note_type === 'task' ? 'bg-red-500' :
-                                        note.note_type === 'idea' ? 'bg-blue-500' :
-                                        note.note_type === 'shopping_list' ? 'bg-green-500' : 'bg-gray-500'
-                                    ]"></span>
+                <span :class="[
+                    'w-3 h-3 rounded-full',
+                    note.note_type === 'task' ? 'bg-red-500' :
+                    note.note_type === 'idea' ? 'bg-blue-500' :
+                    note.note_type === 'shopping_list' ? 'bg-green-500' :
+                    note.note_type === 'event' ? 'bg-purple-500' : 'bg-gray-500'
+                ]"></span>
                                     <span class="ml-2 text-xs font-medium text-gray-500">{{
                                             note.note_type === 'task' ? 'Task' :
                                                 note.note_type === 'idea' ? 'Idee' :
-                                                    note.note_type === 'shopping_list' ? 'Cumpărături' : 'Notiță'
+                                                    note.note_type === 'shopping_list' ? 'Cumpărături' :
+                                                        note.note_type === 'event' ? 'Eveniment' : 'Notiță'
                                         }}</span>
                                 </div>
-                                <!-- Star icon for favorite toggle -->
-                                <button @click.stop="toggleFavorite(note)" class="focus:outline-none">
-                                    <svg v-if="note.is_favorite" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-500 fill-yellow-500 hover:text-yellow-600" viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                    </svg>
-                                    <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 hover:text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                                    </svg>
-                                </button>
+
+                                <!-- Action buttons -->
+                                <div class="flex items-center space-x-2">
+                                    <!-- Completed toggle button - pentru toate tipurile de notițe -->
+                                    <button @click.stop="toggleCompleted(note)" class="focus:outline-none" title="Marchează ca finalizat">
+                                        <svg v-if="note.is_completed" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 hover:text-green-600" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                        </svg>
+                                        <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 hover:text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </button>
+
+                                    <!-- Favorite toggle button -->
+                                    <button @click.stop="toggleFavorite(note)" class="focus:outline-none" title="Adaugă la favorite">
+                                        <svg v-if="note.is_favorite" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-500 fill-yellow-500 hover:text-yellow-600" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                        </svg>
+                                        <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 hover:text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
 
-                            <h3 class="font-medium mb-2">{{ note.title || note.content.substring(0, 40) }}</h3>
-                            <p class="text-sm text-gray-600 mb-2">{{ note.content }}</p>
+                            <!-- Title cu styling pentru completed -->
+                            <h3 :class="[
+            'font-medium mb-2',
+            note.is_completed ? 'line-through text-gray-500' : ''
+        ]">{{ note.title || note.content.substring(0, 40) }}</h3>
+
+                            <!-- Content cu styling pentru completed -->
+                            <p :class="[
+            'text-sm text-gray-600 mb-2',
+            note.is_completed ? 'line-through text-gray-400' : ''
+        ]">{{ note.content }}</p>
 
                             <!-- Shopping list content -->
                             <div v-if="note.note_type === 'shopping_list' && note.metadata && note.metadata.items" class="mb-2">
-                                <div v-for="(item, index) in note.metadata.items" :key="index" class="flex items-center mb-1">
-                                    <div :class="['w-4 h-4 rounded border', item.completed ? 'border-green-500 bg-green-500' : 'border-gray-300']" class="flex items-center justify-center">
+                                <div v-for="(item, itemIndex) in note.metadata.items" :key="itemIndex" class="flex items-center mb-1">
+                                    <div :class="[
+                    'w-4 h-4 rounded border',
+                    item.completed ? 'border-green-500 bg-green-500' : 'border-gray-300'
+                ]" class="flex items-center justify-center">
                                         <svg v-if="item.completed" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor">
                                             <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                                         </svg>
                                     </div>
                                     <span :class="['ml-2 text-sm', item.completed ? 'line-through text-gray-500' : '']">{{ item.text }}</span>
                                 </div>
+                            </div>
+
+                            <!-- Status indicator pentru notițele completed -->
+                            <div v-if="note.is_completed" class="mb-2">
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                Finalizat
+            </span>
                             </div>
 
                             <div class="flex justify-between items-center mt-3 text-xs">

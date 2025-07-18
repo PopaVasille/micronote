@@ -41,6 +41,15 @@ class EloquentNoteRepository implements NoteRepositoryInterface
             ->with('tags')
             ->get();
     }
+    public function getCompletedByUserId(int $userId): Collection
+    {
+        return $this->note->where('user_id', $userId)
+            ->where('is_completed', true)
+            ->whereNull('deleted_at')
+            ->orderBy('created_at', 'desc')
+            ->with('tags')
+            ->get();
+    }
 
     /**
      * @param  int  $userId
