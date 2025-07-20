@@ -6,6 +6,7 @@ use App\Models\IncomingMessage;
 use App\Models\User;
 use App\Repositories\IncomingMessage\Contracts\IncomingMessageRepositoryInterface;
 use App\Repositories\Note\Contracts\NoteRepositoryInterface;
+use App\Services\Classification\HybridMessageClassificationService;
 use App\Services\Classification\MessageClassificationService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -15,12 +16,12 @@ readonly class IncomingTelegramMessageProcessorService
     /**
      * @param  IncomingMessageRepositoryInterface  $incomingMessageRepository
      * @param  NoteRepositoryInterface  $noteRepository
-     * @param  MessageClassificationService  $classificationService
+     * @param  HybridMessageClassificationService  $classificationService
      */
     public function __construct(
         public IncomingMessageRepositoryInterface $incomingMessageRepository,
         public NoteRepositoryInterface $noteRepository,
-        public MessageClassificationService $classificationService
+        public HybridMessageClassificationService $classificationService
     ){}
 
     /**
@@ -49,30 +50,32 @@ readonly class IncomingTelegramMessageProcessorService
             $userId = $user?->id;
             Log::info('$userId: ' . $userId);
             if($user){
-            $noteType = $this->classificationService->classifyMessage($messageContent);
-            Log::info("Mesajul a fost clasificat ca: $noteType");
-            $incomingMessage = $this->incomingMessageRepository->create([
-                'user_id' => $userId,
-                'source_type' => IncomingMessage::SOURCE_TYPE_TELEGRAM,
-                'sender_identifier' => $senderIdentifier,
-                'message_content' => $messageContent,
-                'metadata' => json_encode($data),
-                'is_processed' => true,
-                'processed_at' => now(),
-                'ai_tag' => $noteType // Folosim clasificarea regex ca și tag AI
-            ]);
+                $canUseAI = $this->classificationService->canUseAI($user);
+                $noteType = $this->classificationService->classifyMessage($messageContent,$canUseAI);
+                Log::info("Message classified as: $noteType using " . ($canUseAI ? 'AI+Regex' : 'Regex only'));
+                Log::info("Mesajul a fost clasificat ca: $noteType");
+                $incomingMessage = $this->incomingMessageRepository->create([
+                    'user_id' => $userId,
+                    'source_type' => IncomingMessage::SOURCE_TYPE_TELEGRAM,
+                    'sender_identifier' => $senderIdentifier,
+                    'message_content' => $messageContent,
+                    'metadata' => json_encode($data),
+                    'is_processed' => true,
+                    'processed_at' => now(),
+                    'ai_tag' => $noteType // Folosim clasificarea regex ca și tag AI
+                ]);
 
-            Log::info('Mesaj Telegram salvat în baza de date de către Repo prin service->interface.', ['message_id' => $incomingMessage->id]);
+                Log::info('Mesaj Telegram salvat în baza de date de către Repo prin service->interface.', ['message_id' => $incomingMessage->id]);
 
-            //ToDo: de facut cu AI titlu
-            $noteTitle = Str::limit($messageContent, 20);
-            // Aici, mai târziu, vom adăuga logica de:
-            // - Găsire/Creare utilizator după $senderIdentifier
-            // - Asociere user_id la $incomingMessage
-            // - Trimitere mesajul spre procesare (identificare tip notiță, extragere metadate, etc.)
-            // Dacă am găsit un user, creăm și notița
+                //ToDo: de facut cu AI titlu
+                $noteTitle = Str::limit($messageContent, 20);
+                // Aici, mai târziu, vom adăuga logica de:
+                // - Găsire/Creare utilizator după $senderIdentifier
+                // - Asociere user_id la $incomingMessage
+                // - Trimitere mesajul spre procesare (identificare tip notiță, extragere metadate, etc.)
+                // Dacă am găsit un user, creăm și notița
 
-                // Creăm notița
+                    // Creăm notița
                 $note = $this->noteRepository->create([
                     'user_id' => $userId,
                     'incoming_message_id' => $incomingMessage->id,
