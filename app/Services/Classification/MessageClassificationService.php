@@ -64,6 +64,8 @@ class MessageClassificationService
                             return Note::TYPE_IDEA;
                         case 'shopping':
                             return Note::TYPE_SHOPING_LIST;
+                        case 'reminder':
+                            return Note::TYPE_REMINDER;
                     }
                 }
             }

@@ -17,6 +17,13 @@ class Note extends Model
     public const TYPE_TASK = 'task';
     public const TYPE_IDEA = 'idea';
     public const TYPE_SHOPING_LIST = 'shopping_list';
+    public const TYPE_REMINDER = 'reminder';
+    public const TYPE_RECIPE = 'recipe';
+    public const TYPE_BOOKMARK = 'bookmark';
+    public const TYPE_MEASUREMENT = 'measurement';
+    public const TYPE_EVENT = 'event';
+    public const TYPE_CONTACT = 'contact';
+
     protected $fillable = [
         'uuid',
         'user_id',

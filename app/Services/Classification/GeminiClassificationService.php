@@ -20,7 +20,7 @@ class GeminiClassificationService
     /**
      * Clasifică un mesaj folosind Gemini API
      *
-     * @param string $messageContent
+     * @param  string  $messageContent
      * @return string
      */
     public function classifyMessage(string $messageContent): string
@@ -48,12 +48,11 @@ class GeminiClassificationService
                 $result = $response->json();
                 return $this->parseClassificationResponse($result);
             } else {
-                Log::error('Gemini API error: ' . $response->body());
+                Log::error('Gemini API error: '.$response->body());
                 return $this->fallbackToRegexClassification($messageContent);
             }
-
         } catch (\Exception $e) {
-            Log::error('Gemini classification failed: ' . $e->getMessage());
+            Log::error('Gemini classification failed: '.$e->getMessage());
             return $this->fallbackToRegexClassification($messageContent);
         }
     }
@@ -61,33 +60,46 @@ class GeminiClassificationService
     /**
      * Construiește prompt-ul pentru clasificare
      *
-     * @param string $messageContent
+     * @param  string  $messageContent
      * @return string
      */
     private function buildClassificationPrompt(string $messageContent): string
     {
-        return "Analizează următorul mesaj și clasifică-l în una dintre aceste categorii: task, idea, shopping_list, event, contact, recipe, bookmark, measurement, simple.
+        // We use a HEREDOC string for better readability of the prompt.
+        return <<<PROMPT
+                Ești un asistent expert în clasificare de text. Sarcina ta este să analizezezi mesajul utilizatorului și să îl clasifici în cea mai potrivită categorie din lista de mai jos.
 
-Reguli de clasificare:
-- task: acțiuni de făcut, sarcini, reminder-uri, lucruri urgente
-- idea: concepte creative, sugestii, brainstorming, gânduri inovatoare
-- shopping_list: liste de cumpărături, produse de achiziționat
-- event: evenimente, rezervări, întâlniri, activități programate
-- contact: mesaje despre persoane, informații de contact
-- recipe: rețete, ingrediente, instrucțiuni de gătit
-- bookmark: link-uri, resurse web, articole de salvat
-- measurement: dimensiuni, măsurători, cantități
-- simple: orice altceva care nu se încadrează în categoriile de mai sus
+            # CATEGORII DISPONIBILE:
+            - task: O acțiune sau o sarcină specifică ce trebuie executată. Ceva ce trebuie "făcut".
+            - idea: Un concept, un gând, o sugestie creativă sau o notă generală.
+            - reminder: O notificare pentru a-ți aminti de ceva, adesea legată de un moment în timp.
+            - shopping_list: O listă de produse sau articole de cumpărat.
+            - event: O activitate programată, o întâlnire, o rezervare, cu dată, oră sau locație.
+            - contact: Informații despre o persoană (nume, telefon, email).
+            - recipe: Instrucțiuni de gătit, ingrediente pentru o rețetă.
+            - bookmark: Un link web (URL) care trebuie salvat.
+            - measurement: O valoare numerică cu o unitate de măsură (ex: cm, kg, m²).
+            - simple: Orice mesaj care nu se încadrează clar în categoriile de mai sus.
 
-Mesaj de analizat: \"$messageContent\"
+            # EXEMPLE DE CLASIFICARE CORECTĂ:
+            - Mesaj: "Trimite raportul lunar pana vineri." -> Răspuns: task
+            - Mesaj: "Nu uita sa o suni pe mama maine la 12." -> Răspuns: reminder
+            - Mesaj: "cumparaturi: lapte, paine, oua de la lidl" -> Răspuns: shopping_list
+            - Mesaj: "ar fi misto sa facem un podcast despre istorie" -> Răspuns: idea
+            - Mesaj: "Rezervare la Trattoria vineri la 19:30 pentru 4 persoane" -> Răspuns: event
 
-Răspunde DOAR cu numele categoriei (ex: task, idea, shopping_list, etc.), fără explicații suplimentare.";
+            # MESAJ DE ANALIZAT:
+            "$messageContent"
+
+            # RĂSPUNS AȘTEPTAT:
+            Răspunde DOAR cu numele categoriei (de ex: task, idea, reminder), cu litere mici și fără nicio altă explicație, text suplimentar sau punctuație.
+            PROMPT;
     }
 
     /**
      * Parsează răspunsul de la Gemini API
      *
-     * @param array $response
+     * @param  array  $response
      * @return string
      */
     private function parseClassificationResponse(array $response): string
@@ -104,11 +116,12 @@ Răspunde DOAR cu numele categoriei (ex: task, idea, shopping_list, etc.), făr�
                 'task' => Note::TYPE_TASK,
                 'idea' => Note::TYPE_IDEA,
                 'shopping_list' => Note::TYPE_SHOPING_LIST,
-                'event' => 'event',
-                'contact' => 'contact',
-                'recipe' => 'recipe',
-                'bookmark' => 'bookmark',
-                'measurement' => 'measurement',
+                'reminder' => Note::TYPE_REMINDER,
+                'event' => Note::TYPE_EVENT,
+                'contact' => Note::TYPE_CONTACT,
+                'recipe' => Note::TYPE_RECIPE,
+                'bookmark' => NOTE::TYPE_BOOKMARK,
+                'measurement' => Note::TYPE_MEASUREMENT,
                 'simple' => Note::TYPE_SIMPLE
             ];
 
@@ -128,9 +141,8 @@ Răspunde DOAR cu numele categoriei (ex: task, idea, shopping_list, etc.), făr�
 
             Log::warning("Invalid Gemini classification response: $classification");
             return Note::TYPE_SIMPLE;
-
         } catch (\Exception $e) {
-            Log::error('Error parsing Gemini response: ' . $e->getMessage());
+            Log::error('Error parsing Gemini response: '.$e->getMessage());
             return Note::TYPE_SIMPLE;
         }
     }
@@ -138,7 +150,7 @@ Răspunde DOAR cu numele categoriei (ex: task, idea, shopping_list, etc.), făr�
     /**
      * Fallback la clasificarea regex când Gemini nu funcționează
      *
-     * @param string $messageContent
+     * @param  string  $messageContent
      * @return string
      */
     private function fallbackToRegexClassification(string $messageContent): string
