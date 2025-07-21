@@ -333,7 +333,7 @@ const handleNoteCreated = () => {
                 </div>
             </div>
 
-            <!-- Conținut principal -->
+            <!-- Continut principal -->
             <div class="flex-1 flex flex-col min-h-screen overflow-hidden">
                 <!-- Header -->
                 <header class="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
@@ -645,6 +645,10 @@ const handleNoteCreated = () => {
                             <span class="w-2 h-2 rounded-full bg-green-500 mr-1"></span>
                             Cumpărături
                         </button>
+                        <button @click="fetchNotes('reminder')" :class="[currentFilter === 'reminder' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-700', 'py-1 px-3 rounded text-sm flex items-center']">
+                            <span class="w-2 h-2 rounded-full bg-orange-500 mr-1"></span>
+                            Reminder
+                        </button>
                         <button @click="fetchNotes('completed')" :class="[currentFilter === 'completed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-700', 'py-1 px-3 rounded text-sm flex items-center']">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
@@ -686,18 +690,20 @@ const handleNoteCreated = () => {
                         <div v-for="(note, index) in notes" :key="note?.id || index" v-if="notes" class="p-4 rounded-lg bg-white border border-gray-200 hover:shadow-md transition-shadow cursor-pointer">
                             <div class="flex items-center justify-between mb-2">
                                 <div class="flex items-center">
-                <span :class="[
-                    'w-3 h-3 rounded-full',
-                    note.note_type === 'task' ? 'bg-red-500' :
-                    note.note_type === 'idea' ? 'bg-blue-500' :
-                    note.note_type === 'shopping_list' ? 'bg-green-500' :
-                    note.note_type === 'event' ? 'bg-purple-500' : 'bg-gray-500'
-                ]"></span>
+    <span :class="[
+        'w-3 h-3 rounded-full',
+        note.note_type === 'task' ? 'bg-red-500' :
+        note.note_type === 'idea' ? 'bg-blue-500' :
+        note.note_type === 'shopping_list' ? 'bg-green-500' :
+        note.note_type === 'event' ? 'bg-purple-500' :
+        note.note_type === 'reminder' ? 'bg-orange-500' : 'bg-gray-500'
+    ]"></span>
                                     <span class="ml-2 text-xs font-medium text-gray-500">{{
                                             note.note_type === 'task' ? 'Task' :
                                                 note.note_type === 'idea' ? 'Idee' :
                                                     note.note_type === 'shopping_list' ? 'Cumpărături' :
-                                                        note.note_type === 'event' ? 'Eveniment' : 'Notiță'
+                                                        note.note_type === 'event' ? 'Eveniment' :
+                                                            note.note_type === 'reminder' ? 'Reminder' : 'Notiță'
                                         }}</span>
                                 </div>
 
