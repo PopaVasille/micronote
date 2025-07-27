@@ -6,6 +6,8 @@ use App\Models\Note;
 use App\Http\Requests\UpdateNoteRequest;
 use App\Repositories\Note\Contracts\NoteRepositoryInterface;
 use App\Services\Classification\MessageClassificationService;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -164,5 +166,33 @@ class NoteController extends Controller
         ]);
 
         return back()->with('success', 'Status task actualizat cu succes');
+    }
+    /**
+     * Update the entire shopping list for a note.
+     *
+     * @param Request $request
+     * @param Note $note
+     * @return \Illuminate\Http\RedirectResponse
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function updateShoppingList(Request $request, Note $note)
+    {
+        $this->authorize('update', $note);
+
+        if ($note->note_type !== 'shopping_list') {
+            return back()->with('banner.danger', 'Notița nu este o listă de cumpărături.');
+        }
+
+        // Validate the incoming data to ensure it's a proper array of items
+        $validated = $request->validate([
+            'items' => ['required', 'array'],
+            'items.*.text' => ['required', 'string', 'max:255'],
+            'items.*.completed' => ['required', 'boolean'],
+        ]);
+
+        $this->noteRepository->update($note, ['metadata' => ['items' => $validated['items']]]);
+
+        return back()->with('banner', 'Itemele au fost actualizat!');
     }
 }

@@ -146,6 +146,102 @@ class GeminiClassificationService
             return Note::TYPE_SIMPLE;
         }
     }
+    /**
+     * Extracts shopping list items from a message using Gemini API.
+     *
+     * @param string $messageContent
+     * @return array|null The structured shopping list items or null on failure.
+     */
+    public function extractShoppingListItems(string $messageContent): ?array
+    {
+        if (!$this->isAvailable()) {
+            return null;
+        }
+
+        $prompt = $this->buildShoppingListPrompt($messageContent);
+
+        try {
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'X-goog-api-key' => $this->apiKey,
+            ])->post($this->baseUrl, [
+                'contents' => [['parts' => [['text' => $prompt]]]],
+                // Force JSON output
+                'generationConfig' => [
+                    'response_mime_type' => 'application/json',
+                ]
+            ]);
+
+            if ($response->successful()) {
+                $result = $response->json();
+                $jsonText = $result['candidates'][0]['content']['parts'][0]['text'] ?? null;
+
+                if ($jsonText) {
+                    $decoded = json_decode($jsonText, true);
+                    if (isset($decoded['items']) && is_array($decoded['items'])) {
+                        Log::info('Successfully extracted shopping items via AI.', $decoded['items']);
+                        // Ensure all items have the 'completed' key
+                        return array_map(function($item) {
+                            return [
+                                'text' => $item['text'] ?? 'unknown item',
+                                'completed' => $item['completed'] ?? false
+                            ];
+                        }, $decoded['items']);
+                    }
+                }
+            } else {
+                Log::error('Gemini API error for shopping list extraction: ' . $response->body());
+            }
+        } catch (\Exception $e) {
+            Log::error('Gemini shopping list extraction failed: ' . $e->getMessage());
+        }
+
+        return null; // Return null if anything fails
+    }
+
+    /**
+     * Builds the prompt for shopping list item extraction.
+     *
+     * @param string $messageContent
+     * @return string
+     */
+    private function buildShoppingListPrompt(string $messageContent): string
+    {
+        return <<<PROMPT
+        Analizează următorul text, care este o listă de cumpărături. Extrage fiecare item și returnează-l într-un format JSON.
+        Fiecare item trebuie să fie un obiect cu cheile "text" (string) și "completed" (boolean, default false).
+
+        Reguli importante:
+        1. Ignoră orice text care nu pare a fi un item de cumpărături.
+        2. Tratează cuvintele de legătură precum 'și', 'iar', 'cu' sau virgulele ca separatori de itemi.
+        3. Asigură-te că un item extras NU începe cu aceste cuvinte de legătură.
+
+        Exemplu 1:
+        Text: "cumpără lapte, oua si branza"
+        Răspuns JSON:
+        {
+          "items": [
+            { "text": "lapte", "completed": false },
+            { "text": "oua", "completed": false },
+            { "text": "branza", "completed": false }
+          ]
+        }
+
+        Exemplu 2:
+        Text: "lista magazin: 2 paini, 1L de lapte iar la final hartie igienica"
+        Răspuns JSON:
+        {
+          "items": [
+            { "text": "2 paini", "completed": false },
+            { "text": "1L de lapte", "completed": false },
+            { "text": "hartie igienica", "completed": false }
+          ]
+        }
+
+        Acum, analizează acest text și returnează DOAR formatul JSON:
+        "$messageContent"
+        PROMPT;
+    }
 
     /**
      * Fallback la clasificarea regex când Gemini nu funcționează

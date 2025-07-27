@@ -3,9 +3,11 @@
 namespace App\Services\Telegram\IncomingMessage;
 
 use App\Models\IncomingMessage;
+use App\Models\Note;
 use App\Models\User;
 use App\Repositories\IncomingMessage\Contracts\IncomingMessageRepositoryInterface;
 use App\Repositories\Note\Contracts\NoteRepositoryInterface;
+use App\Services\Classification\GeminiClassificationService;
 use App\Services\Classification\HybridMessageClassificationService;
 use App\Services\Classification\MessageClassificationService;
 use Illuminate\Support\Facades\Log;
@@ -21,7 +23,8 @@ readonly class IncomingTelegramMessageProcessorService
     public function __construct(
         public IncomingMessageRepositoryInterface $incomingMessageRepository,
         public NoteRepositoryInterface $noteRepository,
-        public HybridMessageClassificationService $classificationService
+        public HybridMessageClassificationService $classificationService,
+        public GeminiClassificationService $geminiService
     ){}
 
     /**
@@ -54,6 +57,15 @@ readonly class IncomingTelegramMessageProcessorService
                 $noteType = $this->classificationService->classifyMessage($messageContent,$canUseAI);
                 Log::info("Message classified as: $noteType using " . ($canUseAI ? 'AI+Regex' : 'Regex only'));
                 Log::info("Mesajul a fost clasificat ca: $noteType");
+
+                $metadata = null;
+                // Dacă notița este o listă de cumpărături, extragem itemii
+                if ($noteType === Note::TYPE_SHOPING_LIST) {
+                    $items = $this->geminiService->extractShoppingListItems($messageContent);
+                    if ($items !== null) {
+                        $metadata = ['items' => $items];
+                    }
+                }
                 $incomingMessage = $this->incomingMessageRepository->create([
                     'user_id' => $userId,
                     'source_type' => IncomingMessage::SOURCE_TYPE_TELEGRAM,
@@ -82,6 +94,7 @@ readonly class IncomingTelegramMessageProcessorService
                     'title' => $noteTitle,
                     'content' => $messageContent,
                     'note_type' => $noteType,
+                    'metadata' => $metadata,
                     'created_at' => $messageDate ? date('Y-m-d H:i:s', $messageDate) : now(),
                 ]);
                 $user->increment('notes_count');

@@ -38,6 +38,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('notes.toggle-completed');
     Route::post('/notes/{note}/update', [NoteController::class, 'update'])
         ->name('notes.update');
+    Route::put('/notes/{note}/shopping-list', [NoteController::class, 'updateShoppingList'])
+        ->name('notes.shopping.update');
     // Adaugă și celelalte rute
 });
 

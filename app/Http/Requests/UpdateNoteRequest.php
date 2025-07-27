@@ -29,6 +29,10 @@ class UpdateNoteRequest extends FormRequest
             'content' => 'string|required',
             'is_completed' => 'nullable|boolean',
             'is_favorite' => 'nullable|boolean',
+            'metadata' => ['sometimes', 'array'],
+            'metadata.items' => ['nullable', 'array'],
+            'metadata.items.*.text' => ['required_with:metadata.items', 'string'],
+            'metadata.items.*.completed' => ['required_with:metadata.items', 'boolean'],
         ];
     }
 }
