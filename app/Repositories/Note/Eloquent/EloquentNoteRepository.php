@@ -27,6 +27,7 @@ class EloquentNoteRepository implements NoteRepositoryInterface
     {
         return $this->note->where('user_id', $userId)
             ->whereNull('deleted_at')
+            ->where('is_completed', false)
             ->orderBy('created_at', 'desc')
             ->with('tags')
             ->get();
@@ -36,6 +37,7 @@ class EloquentNoteRepository implements NoteRepositoryInterface
     {
         return $this->note->where('user_id', $userId)
             ->where('is_favorite', true)
+            ->where('is_completed', false)
             ->whereNull('deleted_at')
             ->orderBy('created_at', 'desc')
             ->with('tags')
@@ -60,6 +62,7 @@ class EloquentNoteRepository implements NoteRepositoryInterface
     {
         return $this->note->where('user_id', $userId)
             ->where('note_type', $noteType)
+            ->where('is_completed', false)
             ->whereNull('deleted_at')
             ->orderBy('created_at', 'desc')
             ->with('tags')

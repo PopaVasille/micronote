@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Note;
+use App\Http\Requests\UpdateNoteRequest;
 use App\Repositories\Note\Contracts\NoteRepositoryInterface;
 use App\Services\Classification\MessageClassificationService;
 use Illuminate\Http\Request;
@@ -88,26 +89,16 @@ class NoteController extends Controller
     /**
      * Update a note's status.
      */
-    public function update(Request $request, Note $note)
+    public function update(UpdateNoteRequest $request, Note $note)
     {
-        Log::info('ajung aici?');
-        // Verificăm că utilizatorul este proprietarul notiței
         $this->authorize('update', $note);
 
-        $validated = $request->validate([
-            'is_completed' => 'nullable|boolean',
-            'is_favorite' => 'nullable|boolean',
-        ]);
+        $validated = $request->validated();
 
-        // Actualizăm notița
-        $updatedNote = $this->noteRepository->update($note, $validated);
+        $this->noteRepository->update($note, $validated);
 
-        // Returnăm răspuns JSON în loc de redirect
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Notiță actualizată cu succes',
-            'data' => $updatedNote
-        ]);
+
+        return back()->with('banner', 'Notiță actualizată cu succes!');
     }
     /**
      * Display a listing of the resource.
@@ -141,9 +132,7 @@ class NoteController extends Controller
         ]);
 
         // Verifică că utilizatorul este proprietarul notiței
-        if ($note->user_id !== auth()->id()) {
-            abort(403, 'Nu ai permisiunea să modifici această notiță');
-        }
+        $this->authorize('update', $note);
 
         // Toggle favorite
         $note->update([
@@ -167,9 +156,7 @@ class NoteController extends Controller
         Log::info('Toggle completed pentru notița: ' . $note->id);
 
         // Verifică că utilizatorul este proprietarul notiței
-        if ($note->user_id !== auth()->id()) {
-            abort(403, 'Nu ai permisiunea să modifici această notiță');
-        }
+        $this->authorize('update', $note);
 
         // Toggle completed
         $note->update([

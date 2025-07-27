@@ -36,6 +36,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('notes.toggle-favorite');
     Route::post('/notes/{note}/toggle-completed', [NoteController::class, 'toggleCompleted'])
         ->name('notes.toggle-completed');
+    Route::post('/notes/{note}/update', [NoteController::class, 'update'])
+        ->name('notes.update');
     // Adaugă și celelalte rute
 });
 
