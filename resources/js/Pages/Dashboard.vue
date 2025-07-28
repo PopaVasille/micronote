@@ -1,21 +1,22 @@
 <script setup>
 //import Layout from '@/Layouts/GuestLayout'
 import {Head, router, usePage, Link} from '@inertiajs/vue3';
-import {ref, onMounted, computed, onBeforeUnmount} from 'vue';
+import {ref, onMounted, computed, onBeforeUnmount, watch} from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import CreateNoteModal from '@/Components/Note/CreateNoteModal.vue';
 import offlineStorage from '@/utils/offlineStorage';
 import NoteDetailModal from '@/Components/Note/NoteDetailModal.vue';
 
+const page = usePage();
 // State pentru notițe și filtre
 const isLoading = ref(true);
 const currentFilter = ref('all');
-const searchQuery = ref('');
+// Inițializăm searchQuery cu valoarea din props, dacă există
+const searchQuery = ref(page.props.search || '');
 const showUserDropdown = ref(false);
 const showMobileUserMenu = ref(false);
 const showSidebar = ref(true); // Pentru mobile
 const showCreateModal = ref(false); // State pentru modal
-const page = usePage();
 const isOffline = ref(false);
 const hasPendingChanges = ref(false);
 // Facem `notes` o proprietate calculată (computed) care reacționează la schimbările din `page.props.notes`
@@ -89,9 +90,11 @@ const handleNoteUpdate = (updatedNote) => {
 };
 
 // Încărcarea notițelor
-const fetchNotes = async (filter = 'all') => {
-    isLoading.value = true;
-    router.get(route('dashboard'), {filter: filter}, {
+const fetchNotes = (filter = currentFilter.value, search = searchQuery.value) => {
+    router.get(route('dashboard'), {
+        filter: filter,
+        search: search,
+    }, {
         preserveState: true,
         preserveScroll: true,
         replace: true,
@@ -104,6 +107,14 @@ const fetchNotes = async (filter = 'all') => {
             console.error('A apărut o eroare la încărcarea notițelor.');
         }
     });
+};
+// Funcție de "debounce" pentru a evita prea multe request-uri
+let debounceTimeout = null;
+const debouncedSearch = () => {
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(() => {
+        fetchNotes();
+    }, 300); // Așteaptă 300ms după ce utilizatorul nu mai tastează
 };
 const toggleFavorite = (note) => {
     console.log('Toggle favorite pentru:', note.id);
@@ -190,6 +201,7 @@ const handleNoteCreated = () => {
 const openCreateModal = () => {
     showCreateModal.value = true;
 };
+watch(searchQuery, debouncedSearch);
 </script>
 
 <template>
@@ -449,25 +461,17 @@ const openCreateModal = () => {
                     </div>
 
                     <div class="flex items-center space-x-2">
-                        <!-- Search button pentru mobile -->
-                        <button class="sm:hidden p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                                 stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                            </svg>
-                        </button>
 
                         <!-- Export CSV Button - ascuns pe mobile -->
-                        <button
-                            class="hidden md:flex items-center text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 py-1 px-3 rounded">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
-                                 stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                            </svg>
-                            Export CSV
-                        </button>
+<!--                        <button-->
+<!--                            class="hidden md:flex items-center text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 py-1 px-3 rounded">-->
+<!--                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"-->
+<!--                                 stroke="currentColor">-->
+<!--                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"-->
+<!--                                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>-->
+<!--                            </svg>-->
+<!--                            Export CSV-->
+<!--                        </button>-->
 
                         <!-- Desktop User Dropdown (ascuns pe mobile) -->
                         <div class="relative hidden md:block" @click.stop>
@@ -657,7 +661,7 @@ const openCreateModal = () => {
                                             <input
                                                 v-model="searchQuery"
                                                 type="text"
-                                                placeholder="Caută notițe..."
+                                                placeholder="Caută in notițe..."
                                                 class="w-full py-2 pl-9 pr-4 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                                             />
                                             <svg xmlns="http://www.w3.org/2000/svg"
@@ -670,16 +674,16 @@ const openCreateModal = () => {
                                     </div>
 
                                     <!-- Export pentru mobile -->
-                                    <button
-                                        class="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                        @click="showMobileUserMenu = false">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gray-500"
-                                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                                        </svg>
-                                        Export CSV
-                                    </button>
+<!--                                    <button-->
+<!--                                        class="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"-->
+<!--                                        @click="showMobileUserMenu = false">-->
+<!--                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gray-500"-->
+<!--                                             fill="none" viewBox="0 0 24 24" stroke="currentColor">-->
+<!--                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"-->
+<!--                                                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>-->
+<!--                                        </svg>-->
+<!--                                        Export CSV-->
+<!--                                    </button>-->
 
                                     <!-- Divider -->
                                     <div class="border-t border-gray-100 my-2"></div>

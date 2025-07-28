@@ -24,11 +24,12 @@ class NoteController extends Controller
     {
         $user = $request->user();
         $filter = $request->query('filter', 'all');
+        $searchQuery = $request->query('search');
 
         $notes = match($filter) {
-            'all' => $this->noteRepository->getAllByUserId($user->id),
-            'favorite' => $this->noteRepository->getFavoriteByUserId($user->id),
-            'completed' => $this->noteRepository->getCompletedByUserId($user->id),
+            'all' => $this->noteRepository->getAllByUserId($user->id,$searchQuery),
+            'favorite' => $this->noteRepository->getFavoriteByUserId($user->id,$searchQuery),
+            'completed' => $this->noteRepository->getCompletedByUserId($user->id,$searchQuery),
             default => $this->noteRepository->getByUserIdAndType($user->id, $filter)
         };
 
@@ -37,7 +38,8 @@ class NoteController extends Controller
 
         return Inertia::render('Dashboard', [
             'notes' => $notes,
-            'filter' => $filter
+            'filter' => $filter,
+            'search' => $searchQuery,
         ])->withViewData([
             'cache-control' => 'max-age=60, must-revalidate' // Cache pentru 60 secunde, dar trebuie revalidat
         ]);

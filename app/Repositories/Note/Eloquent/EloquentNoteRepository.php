@@ -23,34 +23,47 @@ class EloquentNoteRepository implements NoteRepositoryInterface
      * @param  int  $userId
      * @return Collection
      */
-    public function getAllByUserId(int $userId): Collection
+    public function getAllByUserId(int $userId, ?string $searchQuery = null): Collection
     {
-        return $this->note->where('user_id', $userId)
+        $query = $this->note->where('user_id', $userId)
             ->whereNull('deleted_at')
             ->where('is_completed', false)
             ->orderBy('created_at', 'desc')
-            ->with('tags')
-            ->get();
+            ->with('tags');
+        if($searchQuery){
+            $query->where('title', 'like', "%$searchQuery%")
+                ->orWhere('content', 'like', "%$searchQuery%");
+        }
+        return  $query->get();
     }
 
-    public function getFavoriteByUserId(int $userId): Collection
+    public function getFavoriteByUserId(int $userId, ?string $searchQuery = null): Collection
     {
-        return $this->note->where('user_id', $userId)
+        $query = $this->note->where('user_id', $userId)
             ->where('is_favorite', true)
             ->where('is_completed', false)
             ->whereNull('deleted_at')
             ->orderBy('created_at', 'desc')
-            ->with('tags')
-            ->get();
+            ->with('tags');
+            if($searchQuery){
+                $query->where('title', 'like', "%$searchQuery%")
+                    ->orWhere('content', 'like', "%$searchQuery%");
+            }
+          return  $query->get();
     }
-    public function getCompletedByUserId(int $userId): Collection
+    public function getCompletedByUserId(int $userId, ?string $searchQuery = null): Collection
     {
-        return $this->note->where('user_id', $userId)
+        $query = $this->note->where('user_id', $userId)
             ->where('is_completed', true)
             ->whereNull('deleted_at')
             ->orderBy('created_at', 'desc')
-            ->with('tags')
-            ->get();
+            ->with('tags');
+
+        if($searchQuery){
+            $query->where('title', 'like', "%$searchQuery%")
+                  ->orWhere('content', 'like', "%$searchQuery%");
+        }
+        return  $query->get();
     }
 
     /**
