@@ -68,12 +68,22 @@ const closeModal = () => {
 
 // Funcție pentru a actualiza lista de notițe după editare (UI Optimistic)
 const handleNoteUpdate = (updatedNote) => {
+    if (!notes.value) {
+        console.warn('Notes array is undefined when trying to update a note');
+        return;
+    }
+
     const index = notes.value.findIndex(n => n.id === updatedNote.id);
     if (index !== -1) {
-        // Actualizăm direct obiectul în array-ul reactiv
-        notes.value[index] = updatedNote;
+        // Create a new array with the updated note
+        const updatedNotes = [...notes.value];
+        updatedNotes[index] = updatedNote;
+
+        // Update page.props.notes directly
+        page.props.notes = updatedNotes;
     }
 };
+
 // Încărcarea notițelor
 const fetchNotes = async (filter = 'all') => {
     isLoading.value = true;
@@ -143,8 +153,8 @@ onMounted(() => {
     updateOnlineStatus();
 
     // Debugging: Afișează notițele inițiale
-    console.log('Dashboard mounted. Initial page.props.notes:', page.props.notes);
-    console.log('Initial computed notes.value:', notes.value);
+    //console.log('Dashboard mounted. Initial page.props.notes:', page.props.notes);
+    //console.log('Initial computed notes.value:', notes.value);
 });
 
 // Adaugă această funcție pentru a elimina evenimentele la demontatarea componentei

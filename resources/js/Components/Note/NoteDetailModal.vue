@@ -11,6 +11,10 @@ const emit = defineEmits(['close', 'noteUpdated']);
 
 const isEditing = ref(false);
 
+// State local pentru shopping list
+const localShoppingItems = ref([]);
+const hasUnsavedChanges = ref(false);
+
 // Folosim useForm de la Inertia pentru a gestiona starea formularului de editare
 const form = useForm({
     id: null,
@@ -18,15 +22,25 @@ const form = useForm({
     content: '',
 });
 
-// Când prop-ul `note` se schimbă (când se deschide modalul), actualizăm formularul
+// Când prop-ul `note` se schimbă, actualizăm formularul și shopping items
 watch(() => props.note, (newNote) => {
     if (newNote) {
         form.id = newNote.id;
         form.title = newNote.title;
         form.content = newNote.content;
+
+        // Inițializează lista locală de shopping cu o copie deep
+        if (newNote.note_type === 'shopping_list' && newNote.metadata?.items) {
+            localShoppingItems.value = JSON.parse(JSON.stringify(newNote.metadata.items));
+        } else {
+            localShoppingItems.value = [];
+        }
+        hasUnsavedChanges.value = false;
     } else {
         form.reset();
         isEditing.value = false;
+        localShoppingItems.value = [];
+        hasUnsavedChanges.value = false;
     }
 });
 
@@ -68,6 +82,53 @@ const noteTypeBadgeClass = computed(() => {
     return colorMap[props.note.note_type] || 'bg-gray-100 text-gray-700';
 });
 
+// Funcție pentru toggle shopping items (doar local)
+const toggleShoppingItem = (itemIndex) => {
+    console.log('Toggle shopping item:', hasUnsavedChanges.value);
+    console.log('Note type:', props.note?.note_type);
+
+    if (localShoppingItems.value[itemIndex]) {
+        console.log('Toggle shopping item in if:', hasUnsavedChanges.value);
+        localShoppingItems.value[itemIndex].completed = !localShoppingItems.value[itemIndex].completed;
+        hasUnsavedChanges.value = true;
+    }
+    console.log('Toggle shopping item dupa if:', hasUnsavedChanges.value);
+};
+
+// Funcție pentru salvarea shopping list-ului
+const saveShoppingList = () => {
+    if (!props.note || props.note.note_type !== 'shopping_list') return;
+
+    // Trimite doar lista actualizată la server
+    form.transform(data => ({
+        ...data,
+        metadata: {
+            ...props.note.metadata,
+            items: localShoppingItems.value
+        }
+    })).post(route('notes.update', props.note.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            hasUnsavedChanges.value = false;
+            console.log('Lista de cumpărături salvată cu succes!');
+
+            // Emite event pentru actualizarea listei din dashboard
+            emit('noteUpdated');
+        },
+        onError: (errors) => {
+            console.error('Eroare la salvarea listei:', errors);
+        }
+    });
+};
+
+// Funcție pentru resetarea modificărilor nesalvate
+const resetShoppingList = () => {
+    if (props.note && props.note.metadata?.items) {
+        localShoppingItems.value = JSON.parse(JSON.stringify(props.note.metadata.items));
+        hasUnsavedChanges.value = false;
+    }
+};
+
 const startEditing = () => {
     isEditing.value = true;
 };
@@ -79,10 +140,18 @@ const cancelEditing = () => {
 };
 
 const closeModal = () => {
-    emit('close');
+    // Verifică dacă sunt modificări nesalvate înainte de închidere
+    if (hasUnsavedChanges.value) {
+        if (confirm('Ai modificări nesalvate la lista de cumpărături. Vrei să închizi fără să salvezi?')) {
+            resetShoppingList();
+            emit('close');
+        }
+    } else {
+        emit('close');
+    }
 };
 
-// Funcția de salvare
+// Funcția de salvare pentru text
 const saveChanges = () => {
     if (!props.note) return;
 
@@ -90,14 +159,11 @@ const saveChanges = () => {
     form.post(route('notes.update', props.note.id), {
         preserveScroll: true,
         onSuccess: () => {
-            // Tot ce trebuie să facem la succes este să închidem modalul.
-            // Lista de notițe din Dashboard se va actualiza automat.
             isEditing.value = false;
             closeModal();
         },
         onError: (errors) => {
             console.error('Update failed:', errors);
-            // Poți afișa erorile utilizatorului aici dacă dorești.
         }
     });
 };
@@ -113,6 +179,17 @@ const formatDate = (dateString) => {
         minute: '2-digit'
     });
 };
+
+// Computed pentru progresul listei de cumpărături
+const shoppingProgress = computed(() => {
+    if (!localShoppingItems.value.length) return { completed: 0, total: 0, percentage: 0 };
+
+    const completed = localShoppingItems.value.filter(item => item.completed).length;
+    const total = localShoppingItems.value.length;
+    const percentage = Math.round((completed / total) * 100);
+
+    return { completed, total, percentage };
+});
 </script>
 
 <template>
@@ -133,6 +210,14 @@ const formatDate = (dateString) => {
                             noteTypeBadgeClass
                         ]">
                             {{ noteTypeDisplay }}
+                        </span>
+
+                        <!-- Unsaved changes indicator pentru shopping list -->
+                        <span v-if="hasUnsavedChanges" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Modificări nesalvate
                         </span>
 
                         <!-- Favorite & Completed Indicators -->
@@ -184,27 +269,75 @@ const formatDate = (dateString) => {
                             </p>
                         </div>
 
-                        <!-- Shopping List Items (dacă există) -->
-                        <div v-if="note.note_type === 'shopping_list' && note.metadata?.items" class="space-y-2">
-                            <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Liste de cumpărături</h4>
-                            <div class="space-y-2">
-                                <div v-for="(item, index) in note.metadata.items" :key="index"
-                                     class="flex items-center space-x-3 p-2 rounded-lg bg-gray-50">
+                        <!-- Shopping List Items cu funcționalitate LOCALĂ -->
+                        <div v-if="note.note_type === 'shopping_list' && localShoppingItems.length" class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <h4 class="text-lg font-medium text-gray-900">Lista de cumpărături</h4>
+                                <div class="text-sm text-gray-500">
+                                    {{ shoppingProgress.completed }} / {{ shoppingProgress.total }} completate
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="w-full bg-gray-200 rounded-full h-3">
+                                <div
+                                    class="bg-gradient-to-r from-green-400 to-green-600 h-3 rounded-full transition-all duration-500"
+                                    :style="`width: ${shoppingProgress.percentage}%`"
+                                ></div>
+                            </div>
+
+                            <!-- Shopping Items -->
+                            <div class="space-y-2 max-h-60 overflow-y-auto">
+                                <div v-for="(item, index) in localShoppingItems" :key="index"
+                                     @click="toggleShoppingItem(index)"
+                                     class="flex items-center space-x-3 p-3 rounded-lg transition-all duration-200 cursor-pointer group"
+                                     :class="item.completed ? 'bg-green-50 hover:bg-green-100' : 'bg-gray-50 hover:bg-gray-100'">
                                     <div :class="[
-                                        'w-4 h-4 rounded border-2 flex items-center justify-center',
-                                        item.completed ? 'bg-green-500 border-green-500' : 'border-gray-300'
+                                        'w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all duration-200',
+                                        item.completed ? 'bg-green-500 border-green-500 scale-110' : 'border-gray-300 group-hover:border-green-400'
                                     ]">
                                         <svg v-if="item.completed" xmlns="http://www.w3.org/2000/svg"
-                                             class="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                             class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
                                         </svg>
                                     </div>
                                     <span :class="[
-                                        'text-sm',
-                                        item.completed ? 'line-through text-gray-500' : 'text-gray-700'
+                                        'text-base font-medium transition-all duration-200',
+                                        item.completed ? 'line-through text-gray-500' : 'text-gray-800 group-hover:text-gray-900'
                                     ]">
                                         {{ item.text }}
                                     </span>
+
+                                    <!-- Completed indicator -->
+                                    <div class="ml-auto">
+                                        <span v-if="item.completed"
+                                              class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            ✓ Luat
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Shopping List Actions -->
+                            <div v-if="note.note_type === 'shopping_list' && hasUnsavedChanges" class="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
+                                <div class="flex items-center text-orange-700">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <span class="text-sm font-medium">Ai modificări nesalvate</span>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button
+                                        @click="resetShoppingList"
+                                        class="px-3 py-1 text-sm text-orange-700 hover:text-orange-800 hover:bg-orange-100 rounded transition-colors">
+                                        Resetează
+                                    </button>
+                                    <button
+                                        @click="saveShoppingList"
+                                        :disabled="form.processing"
+                                        class="px-4 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 transition-colors">
+                                        {{ form.processing ? 'Se salvează...' : 'Salvează' }}
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -223,7 +356,7 @@ const formatDate = (dateString) => {
                         </div>
                     </div>
 
-                    <!-- Edit Mode -->
+                    <!-- Edit Mode (pentru text, nu pentru shopping list) -->
                     <form v-if="isEditing && note" @submit.prevent="saveChanges" class="space-y-6">
                         <div>
                             <h3 class="text-lg font-semibold text-gray-900 mb-4">Editare Notiță</h3>
