@@ -68,12 +68,15 @@ const closeModal = () => {
 
 // Funcție pentru a actualiza lista de notițe după editare (UI Optimistic)
 const handleNoteUpdate = (updatedNote) => {
+    console.log('ajung in handleNoteUpdate: ', updatedNote);
+    console.log('notes.value din handleNoteUpdate:', notes.value)
     if (!notes.value) {
         console.warn('Notes array is undefined when trying to update a note');
         return;
     }
 
     const index = notes.value.findIndex(n => n.id === updatedNote.id);
+    console.log('index din handlenoteupdated:', index)
     if (index !== -1) {
         // Create a new array with the updated note
         const updatedNotes = [...notes.value];
@@ -82,6 +85,7 @@ const handleNoteUpdate = (updatedNote) => {
         // Update page.props.notes directly
         page.props.notes = updatedNotes;
     }
+    fetchNotes();
 };
 
 // Încărcarea notițelor

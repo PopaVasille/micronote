@@ -98,7 +98,7 @@ const toggleShoppingItem = (itemIndex) => {
 // Funcție pentru salvarea shopping list-ului
 const saveShoppingList = () => {
     if (!props.note || props.note.note_type !== 'shopping_list') return;
-
+console.log('Save shopping list:', hasUnsavedChanges.value);
     // Trimite doar lista actualizată la server
     form.transform(data => ({
         ...data,
@@ -108,12 +108,19 @@ const saveShoppingList = () => {
         }
     })).post(route('notes.update', props.note.id), {
         preserveScroll: true,
-        onSuccess: () => {
+        onSuccess: (page) => {
+            console.log('am trimis catre server:', hasUnsavedChanges.value);
             hasUnsavedChanges.value = false;
-            console.log('Lista de cumpărături salvată cu succes!');
-
+            console.log('Lista de cumpărături salvată cu succes!',hasUnsavedChanges.value);
+            const updatedNoteFromServer = page.props.updatedNote;
+            console.log('updatedNoteFromServer: ',updatedNoteFromServer)
             // Emite event pentru actualizarea listei din dashboard
-            emit('noteUpdated');
+            if (updatedNoteFromServer) {
+
+                emit('noteUpdated', updatedNoteFromServer);
+            } else {
+                console.warn('Nota actualizată nu a fost găsită în page.props. Verifică răspunsul serverului.');
+            }
         },
         onError: (errors) => {
             console.error('Eroare la salvarea listei:', errors);

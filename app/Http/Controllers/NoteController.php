@@ -97,10 +97,12 @@ class NoteController extends Controller
 
         $validated = $request->validated();
 
-        $this->noteRepository->update($note, $validated);
+        $updatedNote = $this->noteRepository->update($note, $validated);
 
-
-        return back()->with('banner', 'Notiță actualizată cu succes!');
+        return Inertia::render('Dashboard', [
+            'updatedNote' => $updatedNote,
+            'successMessage' => 'Notiță actualizată cu succes!',
+        ])->with('banner', 'Notiță actualizată cu succes!');
     }
     /**
      * Display a listing of the resource.
