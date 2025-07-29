@@ -244,6 +244,115 @@ class GeminiClassificationService
     }
 
     /**
+     * Extracts reminder details from a message using Gemini API.
+     *
+     * @param string $messageContent
+     * @return array|null The structured reminder details or null on failure.
+     */
+    public function extractReminderDetails(string $messageContent): ?array
+    {
+        if (!$this->isAvailable()) {
+            return null;
+        }
+
+        $prompt = $this->buildReminderExtractionPrompt($messageContent);
+
+        try {
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'X-goog-api-key' => $this->apiKey,
+            ])->post($this->baseUrl, [
+                'contents' => [['parts' => [['text' => $prompt]]]],
+                'generationConfig' => [
+                    'response_mime_type' => 'application/json',
+                ]
+            ]);
+
+            if ($response->successful()) {
+                $result = $response->json();
+                $jsonText = $result['candidates'][0]['content']['parts'][0]['text'] ?? null;
+
+                if ($jsonText) {
+                    $decoded = json_decode($jsonText, true);
+                    if (json_last_error() === JSON_ERROR_NONE && isset($decoded['message']) && isset($decoded['remind_at'])) {
+                        Log::info('Successfully extracted reminder details via AI.', $decoded);
+                        return $decoded;
+                    }
+                }
+            } else {
+                Log::error('Gemini API error for reminder extraction: ' . $response->body());
+            }
+        } catch (\Exception $e) {
+            Log::error('Gemini reminder extraction failed: ' . $e->getMessage());
+        }
+
+        return null;
+    }
+    /**
+     * Builds the prompt for reminder detail extraction.
+     *
+     * @param string $messageContent
+     * @return string
+     */
+    private function buildReminderExtractionPrompt(string $messageContent): string
+    {
+        $now = now()->toDateTimeString();
+        $tomorrow = now()->addDay()->toDateString();
+        $nextWeek = now()->addWeek()->toDateString();
+        $currentYear = now()->year;
+
+        return <<<PROMPT
+        Ești un asistent expert în procesarea limbajului natural. Sarcina ta este să analizezi un text care conține un reminder și să extragi informațiile cheie într-un format JSON.
+
+        # INFORMAȚII DE EXTRAS:
+        - message: (string, obligatoriu) Textul curat al reminderului, fără informații de timp.
+        - remind_at: (string, obligatoriu) Data și ora la care trebuie setat reminderul, în format "YYYY-MM-DD HH:MM:SS".
+        - recurrence_rule: (string, opțional) Regula de recurență. Valori posibile: 'DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'.
+        - recurrence_ends_at: (string, opțional) Data la care se termină recurența, în format "YYYY-MM-DD HH:MM:SS".
+
+        # REGULI IMPORTANTE:
+        1.  **Data și Ora Curente:** Consideră că data și ora curentă sunt: "$now". Toate calculele trebuie să plece de la acest moment.
+        2.  **Interpretare Timp Relativ:**
+            - "mâine la 10" -> "$tomorrow 10:00:00"
+            - "în fiecare zi la 8" -> `recurrence_rule: 'DAILY'`. `remind_at` este prima dată de la ora 8 care urmează.
+            - "în fiecare marți la 19:00" -> `recurrence_rule: 'WEEKLY'`. `remind_at` este data următoarei zile de marți.
+            - "până pe 15 august" -> `recurrence_ends_at` este "$currentYear-08-15 23:59:59".
+        3.  **Textul Reminderului:** Extrage doar acțiunea, fără cuvinte legate de timp. De ex., din "nu uita sa o suni pe mama maine la 12", extrage "sa o suni pe mama".
+
+        # EXEMPLE:
+        - Text: "nu uita sa o suni pe mama maine la 12"
+        - Răspuns JSON:
+        {
+          "message": "sa o suni pe mama",
+          "remind_at": "$tomorrow 12:00:00"
+        }
+
+        - Text: "plimbă câinele în fiecare zi la 8 dimineața"
+        - Răspuns JSON:
+        {
+          "message": "plimbă câinele",
+          "remind_at": "{$tomorrow} 08:00:00",
+          "recurrence_rule": "DAILY"
+        }
+
+        - Text: "ia vitamina C zilnic la prânz până pe 15 august"
+        - Răspuns JSON:
+        {
+          "message": "ia vitamina C",
+          "remind_at": "{$now->format('Y-m-d')} 12:00:00",
+          "recurrence_rule": "DAILY",
+          "recurrence_ends_at": "{$currentYear}-08-15 23:59:59"
+        }
+
+        # TEXT DE ANALIZAT:
+        "$messageContent"
+
+        # RĂSPUNS AȘTEPTAT:
+        Returnează DOAR formatul JSON, fără nicio altă explicație.
+        PROMPT;
+    }
+
+    /**
      * Fallback la clasificarea regex când Gemini nu funcționează
      *
      * @param  string  $messageContent
