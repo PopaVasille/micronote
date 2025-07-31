@@ -297,6 +297,7 @@ class GeminiClassificationService
     private function buildReminderExtractionPrompt(string $messageContent): string
     {
         $now = now()->toDateTimeString();
+        $currentDate =now()->format('Y-m-d');
         $tomorrow = now()->addDay()->toDateString();
         $nextWeek = now()->addWeek()->toDateString();
         $currentYear = now()->year;
@@ -339,7 +340,7 @@ class GeminiClassificationService
         - Răspuns JSON:
         {
           "message": "ia vitamina C",
-          "remind_at": "{$now->format('Y-m-d')} 12:00:00",
+          "remind_at": "{$currentDate} 12:00:00",
           "recurrence_rule": "DAILY",
           "recurrence_ends_at": "{$currentYear}-08-15 23:59:59"
         }
