@@ -27,6 +27,6 @@ class TelegramAccountController extends Controller
         $user->telegram_id = $validated['telegram_id'];
         $user->save();
 
-        return back()->with('success', 'ID Telegram conectat cu succes!');
+        return redirect()->route('dashboard')->with('success', 'Contul Telegram a fost conectat cu succes!');
     }
 }

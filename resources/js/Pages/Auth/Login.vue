@@ -1,19 +1,11 @@
 <script setup>
-import Checkbox from '@/Components/Checkbox.vue';
-import GuestLayout from '@/Layouts/GuestLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import InputError from '@/Components/InputError.vue';
+import Checkbox from '@/Components/Checkbox.vue';
 
 defineProps({
-    canResetPassword: {
-        type: Boolean,
-    },
-    status: {
-        type: String,
-    },
+    canResetPassword: Boolean,
+    status: String,
 });
 
 const form = useForm({
@@ -30,71 +22,76 @@ const submit = () => {
 </script>
 
 <template>
-    <GuestLayout>
-        <Head title="Log in" />
+    <Head title="Intră în cont" />
+    <div class="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white flex flex-col items-center justify-center p-4 sm:p-6">
 
-        <div v-if="status" class="mb-4 text-sm font-medium text-green-600">
-            {{ status }}
+        <!-- Back Button -->
+        <div class="w-full max-w-md mb-4">
+            <Link href="/" class="flex items-center text-blue-300 hover:text-white transition-colors group">
+                <svg class="w-5 h-5 mr-2 transform group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Înapoi la pagina principală
+            </Link>
         </div>
 
-        <form @submit.prevent="submit">
-            <div>
-                <InputLabel for="email" value="Email" />
+        <div class="w-full max-w-md bg-slate-800/50 border border-slate-700/50 rounded-2xl shadow-2xl backdrop-blur-lg">
+            <div class="p-8 sm:p-10">
+                <div class="text-center mb-8">
+                    <Link href="/" class="inline-block mb-4">
+                        <div class="w-16 h-16 bg-gradient-to-r from-blue-400 to-purple-500 rounded-2xl flex items-center justify-center mx-auto shadow-lg">
+                            <span class="text-white font-bold text-4xl">M</span>
+                        </div>
+                    </Link>
+                    <h1 class="text-3xl font-bold text-white">Intră în cont</h1>
+                    <p class="text-blue-200 mt-2">Bucuroși să te revedem!</p>
+                </div>
 
-                <TextInput
-                    id="email"
-                    type="email"
-                    class="mt-1 block w-full"
-                    v-model="form.email"
-                    required
-                    autofocus
-                    autocomplete="username"
-                />
+                <div v-if="status" class="mb-4 text-sm font-medium text-green-400 bg-green-500/20 p-3 rounded-lg">
+                    {{ status }}
+                </div>
 
-                <InputError class="mt-2" :message="form.errors.email" />
+                <form @submit.prevent="submit" class="space-y-6">
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-blue-100 mb-2">Email</label>
+                        <input id="email" type="email" v-model="form.email" required autofocus autocomplete="username"
+                               class="w-full px-4 py-3 bg-slate-800/60 border-2 border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-white placeholder-slate-400" placeholder="exemplu@email.com" />
+                        <InputError class="mt-2" :message="form.errors.email" />
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="password" class="block text-sm font-medium text-blue-100">Parolă</label>
+                            <Link v-if="canResetPassword" :href="route('password.request')" class="text-sm text-blue-300 hover:text-white hover:underline">
+                                Ai uitat parola?
+                            </Link>
+                        </div>
+                        <input id="password" type="password" v-model="form.password" required autocomplete="current-password"
+                               class="w-full px-4 py-3 bg-slate-800/60 border-2 border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-white" placeholder="••••••••" />
+                        <InputError class="mt-2" :message="form.errors.password" />
+                    </div>
+
+                    <div class="block">
+                        <label class="flex items-center">
+                            <Checkbox name="remember" v-model:checked="form.remember" />
+                            <span class="ms-2 text-sm text-blue-200">Ține-mă minte</span>
+                        </label>
+                    </div>
+
+                    <div class="!mt-8">
+                        <button type="submit" :disabled="form.processing"
+                                class="w-full group px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl font-bold text-lg shadow-2xl hover:shadow-blue-500/25 transition-all transform hover:scale-105 flex items-center justify-center disabled:opacity-50 disabled:scale-100">
+                            <span>Intră în cont</span>
+                        </button>
+                    </div>
+
+                    <div class="text-center mt-6">
+                        <Link :href="route('register')" class="text-sm text-blue-300 hover:text-white hover:underline transition-colors">
+                            Nu ai cont? Creează unul acum.
+                        </Link>
+                    </div>
+                </form>
             </div>
-
-            <div class="mt-4">
-                <InputLabel for="password" value="Password" />
-
-                <TextInput
-                    id="password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password"
-                    required
-                    autocomplete="current-password"
-                />
-
-                <InputError class="mt-2" :message="form.errors.password" />
-            </div>
-
-            <div class="mt-4 block">
-                <label class="flex items-center">
-                    <Checkbox name="remember" v-model:checked="form.remember" />
-                    <span class="ms-2 text-sm text-gray-600"
-                        >Remember me</span
-                    >
-                </label>
-            </div>
-
-            <div class="mt-4 flex items-center justify-end">
-                <Link
-                    v-if="canResetPassword"
-                    :href="route('password.request')"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                >
-                    Forgot your password?
-                </Link>
-
-                <PrimaryButton
-                    class="ms-4"
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
-                >
-                    Log in
-                </PrimaryButton>
-            </div>
-        </form>
-    </GuestLayout>
+        </div>
+    </div>
 </template>

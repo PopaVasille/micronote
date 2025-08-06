@@ -11,11 +11,8 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 // Ruta pentru webhook-ul Telegram
-Route::post('/telegram/webhook/micronote12341234', [IncomingMessageController::class, 'handleTelegramWebhook']);
-
-// routes/api.php
 Route::post('/telegram/webhook/bot', [TelegramBotController::class, 'handleWebhook'])->name('telegram.webhook');
-Route::get('/telegram/setwebhook', [TelegramBotController::class, 'setWebhook']);
+//Route::get('/telegram/setwebhook', [TelegramBotController::class, 'setWebhook']);
 
 Route::middleware('auth:sanctum')->group(function () {
     // Listarea notițelor utilizatorului

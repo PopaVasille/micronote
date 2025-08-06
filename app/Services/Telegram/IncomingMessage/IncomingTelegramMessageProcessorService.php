@@ -124,7 +124,7 @@ readonly class IncomingTelegramMessageProcessorService
 
                 return $incomingMessage->id;
             } else {
-                Log::info('Nu s-a găsit un utilizator pentru ID-ul Telegram: ' . $senderIdentifier);;
+                Log::info('Nu s-a găsit un utilizator pentru ID-ul Telegram: ' . $senderIdentifier);
                 return null;
             }
 
