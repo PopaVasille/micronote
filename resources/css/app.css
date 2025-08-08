@@ -1,3 +1,22 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+    --color-primary: #10b981;
+    --color-primary-light: #4ade80;
+    --color-primary-dark: #059669;
+    --color-secondary: #38bdf8;
+    --color-secondary-light: #7dd3fc;
+    --color-secondary-dark: #0284c7;
+    --color-accent: #0ea5e9;
+}
+
+.from-primary {
+    --tw-gradient-from: var(--color-primary);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(16, 185, 129, 0));
+}
+
+.to-secondary {
+    --tw-gradient-to: var(--color-secondary);
+}
