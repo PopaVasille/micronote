@@ -9,7 +9,7 @@ defineProps({
     isLoading: Boolean,
 });
 
-const emit = defineEmits(['toggleFavorite', 'toggleCompleted', 'openNoteDetails']);
+const emit = defineEmits(['toggleFavorite', 'toggleCompleted', 'openNoteDetails', 'openCreateModal']);
 
 const handleToggleFavorite = (note) => {
     emit('toggleFavorite', note);
@@ -45,7 +45,9 @@ const handleOpenNoteDetails = (note) => {
                       d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
             </svg>
             <p class="mt-4 text-gray-500">{{ t('dashboard.no_notes_placeholder') }}</p>
-            <button class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+            <button 
+                @click="emit('openCreateModal')"
+                class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
                 {{ t('dashboard.add_first_note') }}
             </button>
         </div>

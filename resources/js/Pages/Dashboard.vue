@@ -45,7 +45,7 @@ const fetchNotes = (filter = currentFilter.value, search = searchQuery.value) =>
             currentFilter.value = updatedPage.props.filter || filter;
         },
         onError: () => {
-            console.error('A apărut o eroare la încărcarea notițelor.');
+            console.error(t('errors.loadingNotes'));
         },
         onFinish: () => {
             isLoading.value = false;
@@ -79,10 +79,14 @@ const updateOnlineStatus = async () => {
     isOffline.value = !navigator.onLine;
     if (navigator.onLine) {
         hasPendingChanges.value = await offlineStorage.hasPendingNotes();
-        if (hasPendingChanges.value) {
-            const registration = await navigator.serviceWorker.ready;
-            await registration.sync.register('syncNotes');
-            setTimeout(() => fetchNotes(currentFilter.value), 1000);
+        if (hasPendingChanges.value && 'serviceWorker' in navigator) {
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                await registration.sync.register('syncNotes');
+                setTimeout(() => fetchNotes(currentFilter.value), 1000);
+            } catch (error) {
+                console.warn('Service Worker sync failed:', error);
+            }
         }
     }
 };
@@ -174,6 +178,7 @@ watch(searchQuery, debouncedSearch);
                         @toggle-favorite="toggleFavorite"
                         @toggle-completed="toggleCompleted"
                         @open-note-details="openNoteDetails"
+                        @open-create-modal="openCreateModal"
                     />
                 </main>
             </div>
