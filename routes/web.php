@@ -10,6 +10,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
+// Language Switcher
+Route::post('/language', function (Request $request) {
+    $request->validate([
+        'locale' => 'required|in:en,ro',
+    ]);
+
+    session()->put('locale', $request->locale);
+
+    return redirect()->back();
+})->name('language.switch');
+
 // Landing Page
 Route::get('/', [LandingPageController::class, 'show'])->name('landing');
 Route::post('/early-access', [LandingPageController::class, 'store'])->name('early-access.store');

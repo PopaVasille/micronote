@@ -3,6 +3,8 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\File;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -29,20 +31,33 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        return [
-            ...parent::share($request),
+        return array_merge(parent::share($request), [
             'auth' => [
-                'user' => $request->user() ? [
-                    'id' => $request->user()->id,
-                    'name' => $request->user()->name,
-                    'email' => $request->user()->email,
-                    'telegram_id' => $request->user()->telegram_id,
-                ] : null,
+                'user' => $request->user(),
             ],
-            'flash' => [
-                'success' => fn () => $request->session()->get('success'),
-                'error' => fn () => $request->session()->get('error'),
-            ],
-        ];
+            'locale' => function () {
+                return app()->getLocale();
+            },
+            'language' => function () {
+                $locale = app()->getLocale();
+                $jsonTranslations = base_path("lang/$locale.json");
+                $phpTranslations = resource_path("lang/$locale");
+
+                $translations = [];
+
+                if (File::exists($jsonTranslations)) {
+                    $translations = json_decode(File::get($jsonTranslations), true);
+                }
+
+                if (File::exists($phpTranslations)) {
+                    foreach (File::allFiles($phpTranslations) as $file) {
+                        $key = pathinfo($file->getFilename(), PATHINFO_FILENAME);
+                        $translations[$key] = require $file->getRealPath();
+                    }
+                }
+
+                return $translations;
+            },
+        ]);
     }
 }

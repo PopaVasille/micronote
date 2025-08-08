@@ -1,4 +1,5 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 //import Layout from '@/Layouts/GuestLayout'
 import {Head, router, usePage, Link} from '@inertiajs/vue3';
 import {ref, onMounted, computed, onBeforeUnmount, watch} from 'vue';
@@ -7,6 +8,7 @@ import CreateNoteModal from '@/Components/Note/CreateNoteModal.vue';
 import offlineStorage from '@/utils/offlineStorage';
 import NoteDetailModal from '@/Components/Note/NoteDetailModal.vue';
 
+const { t } = useI18n();
 const page = usePage();
 // State pentru notițe și filtre
 const isLoading = ref(true);
@@ -205,7 +207,7 @@ watch(searchQuery, debouncedSearch);
 </script>
 
 <template>
-    <Head title="Notițe"/>
+    <Head :title="t('common.notes')"/>
     <AuthenticatedLayout>
         <!-- Alertă pentru utilizatorii fără telegram_id -->
         <div v-if="!$page.props.auth.user.telegram_id" class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
@@ -219,10 +221,10 @@ watch(searchQuery, debouncedSearch);
                 </div>
                 <div class="ml-3">
                     <p class="text-sm text-yellow-700">
-                        Nu ai conectat contul Telegram. Notițele trimise prin Telegram nu vor fi salvate în contul tău.
+                        {{ t('dashboard.telegram_alert') }}
                         <a :href="route('telegram.connect')"
                            class="font-medium underline text-yellow-700 hover:text-yellow-600">
-                            Conectează Telegram acum
+                            {{ t('dashboard.telegram_connect_link') }}
                         </a>
                     </p>
                 </div>
@@ -238,7 +240,7 @@ watch(searchQuery, debouncedSearch);
                               d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
                               clip-rule="evenodd"/>
                     </svg>
-                    <span>Ești offline. Poți crea notițe care vor fi sincronizate automat când revii online.</span>
+                    <span>{{ t('dashboard.offline_alert') }}</span>
                 </div>
                 <div v-else-if="hasPendingChanges" class="flex items-center text-yellow-700">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
@@ -247,7 +249,7 @@ watch(searchQuery, debouncedSearch);
                               d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
                               clip-rule="evenodd"/>
                     </svg>
-                    <span>Sincronizare în curs... Unele notițe create offline sunt în curs de sincronizare.</span>
+                    <span>{{ t('dashboard.sync_alert') }}</span>
                 </div>
             </div>
         </div>
@@ -274,7 +276,7 @@ watch(searchQuery, debouncedSearch);
 
                 <!-- Statistici utilizator -->
                 <div class="mx-4 my-2 p-3 rounded-lg bg-gray-100">
-                    <p class="text-sm font-medium">Plan Free</p>
+                    <p class="text-sm font-medium">{{ t('dashboard.plan_free') }}</p>
                     <div class="mt-1 flex items-center">
                         <div class="w-full bg-gray-300 rounded-full h-2.5">
                             <div class="bg-gradient-to-r from-primary to-secondary h-2.5 rounded-full"
@@ -295,13 +297,13 @@ watch(searchQuery, debouncedSearch);
                                   d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
                                   clip-rule="evenodd"/>
                         </svg>
-                        <span class="ml-2">Notiță nouă</span>
+                        <span class="ml-2">{{ t('common.new_note') }}</span>
                     </button>
                 </div>
 
                 <!-- Navigare -->
                 <nav class="mt-6 px-4">
-                    <div class="mb-2 text-sm font-medium text-gray-500">NAVIGARE</div>
+                    <div class="mb-2 text-sm font-medium text-gray-500">{{ t('dashboard.navigation') }}</div>
                     <ul>
                         <li>
                             <a href="#" @click.prevent="fetchNotes('all')"
@@ -311,7 +313,7 @@ watch(searchQuery, debouncedSearch);
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                           d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                 </svg>
-                                <span class="ml-2">Toate notițele</span>
+                                <span class="ml-2">{{ t('common.all_notes') }}</span>
                             </a>
                         </li>
                         <li>
@@ -322,7 +324,7 @@ watch(searchQuery, debouncedSearch);
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                           d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
                                 </svg>
-                                <span class="ml-2">Favorite</span>
+                                <span class="ml-2">{{ t('common.favorites') }}</span>
                             </a>
                         </li>
                         <li>
@@ -333,7 +335,7 @@ watch(searchQuery, debouncedSearch);
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                           d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
-                                <span class="ml-2">Remindere</span>
+                                <span class="ml-2">{{ t('common.reminders') }}</span>
                             </a>
                         </li>
                         <li>
@@ -344,7 +346,7 @@ watch(searchQuery, debouncedSearch);
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                           d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                                 </svg>
-                                <span class="ml-2">Liste de Cumpărături</span>
+                                <span class="ml-2">{{ t('common.shopping_lists') }}</span>
                             </a>
                         </li>
                         <li>
@@ -355,7 +357,7 @@ watch(searchQuery, debouncedSearch);
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                           d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
-                                <span class="ml-2">Finalizate</span>
+                                <span class="ml-2">{{ t('common.completed') }}</span>
                             </a>
                         </li>
                     </ul>
@@ -364,7 +366,7 @@ watch(searchQuery, debouncedSearch);
                 <!-- Tag-uri -->
                 <div class="mt-6 px-4">
                     <div class="flex items-center justify-between mb-2">
-                        <span class="text-sm font-medium text-gray-500">TAG-URI</span>
+                        <span class="text-sm font-medium text-gray-500">{{ t('common.tags') }}</span>
                         <button class="text-gray-500 hover:text-gray-700">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                                  stroke="currentColor">
@@ -378,21 +380,21 @@ watch(searchQuery, debouncedSearch);
                             <a href="#" @click.prevent="fetchNotes('task')"
                                :class="[currentFilter === 'task' ? 'bg-gray-200' : 'hover:bg-gray-100', 'flex items-center py-2 px-3 rounded-lg']">
                                 <span class="w-3 h-3 rounded-full bg-red-500"></span>
-                                <span class="ml-2">Task</span>
+                                <span class="ml-2">{{ t('common.task') }}</span>
                             </a>
                         </li>
                         <li>
                             <a href="#" @click.prevent="fetchNotes('idea')"
                                :class="[currentFilter === 'idea' ? 'bg-gray-200' : 'hover:bg-gray-100', 'flex items-center py-2 px-3 rounded-lg']">
                                 <span class="w-3 h-3 rounded-full bg-blue-500"></span>
-                                <span class="ml-2">Idee</span>
+                                <span class="ml-2">{{ t('common.idea') }}</span>
                             </a>
                         </li>
                         <li>
                             <a href="#" @click.prevent="fetchNotes('shopping_list')"
                                :class="[currentFilter === 'shopping_list' ? 'bg-gray-200' : 'hover:bg-gray-100', 'flex items-center py-2 px-3 rounded-lg']">
                                 <span class="w-3 h-3 rounded-full bg-green-500"></span>
-                                <span class="ml-2">Cumpărături</span>
+                                <span class="ml-2">{{ t('common.shopping') }}</span>
                             </a>
                         </li>
                     </ul>
@@ -408,7 +410,7 @@ watch(searchQuery, debouncedSearch);
                                       d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
                             </svg>
                         </button>
-                        <button class="text-gray-500 hover:text-gray-700">
+                        <Link :href="route('profile.edit')" class="text-gray-500 hover:text-gray-700 transition-colors" :title="t('common.profile')">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                                  stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -416,9 +418,9 @@ watch(searchQuery, debouncedSearch);
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                       d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                             </svg>
-                        </button>
+                        </Link>
                         <a href="#" class="text-blue-500 hover:text-blue-600 text-sm font-medium">
-                            Upgrade
+                            {{ t('common.upgrade') }}
                         </a>
                     </div>
                 </div>
@@ -438,9 +440,9 @@ watch(searchQuery, debouncedSearch);
                             </svg>
                         </button>
                         <h2 class="text-lg font-semibold mr-3">{{
-                                currentFilter === 'all' ? 'Toate notițele' :
-                                    (currentFilter === 'favorite' ? 'Favorite' :
-                                        (currentFilter === 'reminder' ? 'Remindere' :
+                                currentFilter === 'all' ? t('common.all_notes') :
+                                    (currentFilter === 'favorite' ? t('common.favorites') :
+                                        (currentFilter === 'reminder' ? t('common.reminders') :
                                             currentFilter.charAt(0).toUpperCase() + currentFilter.slice(1)))
                             }}</h2>
 
@@ -449,7 +451,7 @@ watch(searchQuery, debouncedSearch);
                             <input
                                 v-model="searchQuery"
                                 type="text"
-                                placeholder="Caută..."
+                                :placeholder="t('common.search')"
                                 class="py-2 pl-9 pr-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100 w-32 md:w-64"
                             />
                             <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-3 text-gray-500 h-4 w-4"
@@ -549,7 +551,7 @@ watch(searchQuery, debouncedSearch);
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                   d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                         </svg>
-                                        Profilul meu
+                                        {{ t('common.profile') }}
                                     </Link>
 
                                     <!-- Telegram Connection -->
@@ -563,7 +565,7 @@ watch(searchQuery, debouncedSearch);
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                   d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                                         </svg>
-                                        Conectare Telegram
+                                        {{ t('dashboard.telegram_connection') }}
                                         <span v-if="!$page.props.auth.user.telegram_id"
                                               class="ml-auto w-2 h-2 bg-yellow-400 rounded-full"></span>
                                     </Link>
@@ -580,9 +582,9 @@ watch(searchQuery, debouncedSearch);
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                   d="M13 10V3L4 14h7v7l9-11h-7z"/>
                                         </svg>
-                                        Upgrade la Plus
+                                        {{ t('dashboard.upgrade_to_plus') }}
                                         <span
-                                            class="ml-auto bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs px-2 py-1 rounded-full">2€/lună</span>
+                                            class="ml-auto bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs px-2 py-1 rounded-full">2€/{{ t('common.month') }}</span>
                                     </a>
 
                                     <!-- Divider -->
@@ -601,7 +603,7 @@ watch(searchQuery, debouncedSearch);
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                   d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                                         </svg>
-                                        Deconectare
+                                        {{ t('common.logout') }}
                                     </Link>
                                 </div>
                             </div>
@@ -612,7 +614,7 @@ watch(searchQuery, debouncedSearch);
                             <button
                                 @click="showMobileUserMenu = !showMobileUserMenu"
                                 class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                                title="Setări utilizator"
+                                :title="t('dashboard.user_settings')"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                                      stroke="currentColor">
@@ -661,7 +663,7 @@ watch(searchQuery, debouncedSearch);
                                             <input
                                                 v-model="searchQuery"
                                                 type="text"
-                                                placeholder="Caută in notițe..."
+                                                :placeholder="t('dashboard.search_in_notes')"
                                                 class="w-full py-2 pl-9 pr-4 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                                             />
                                             <svg xmlns="http://www.w3.org/2000/svg"
@@ -699,7 +701,7 @@ watch(searchQuery, debouncedSearch);
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                   d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                         </svg>
-                                        Profilul meu
+                                        {{ t('common.profile') }}
                                     </Link>
 
                                     <!-- Telegram Connection -->
@@ -713,7 +715,7 @@ watch(searchQuery, debouncedSearch);
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                   d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                                         </svg>
-                                        Conectare Telegram
+                                        {{ t('dashboard.telegram_connection') }}
                                         <span v-if="!$page.props.auth.user.telegram_id"
                                               class="ml-auto w-2 h-2 bg-yellow-400 rounded-full"></span>
                                     </Link>
@@ -730,7 +732,7 @@ watch(searchQuery, debouncedSearch);
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                   d="M13 10V3L4 14h7v7l9-11h-7z"/>
                                         </svg>
-                                        Upgrade la Plus
+                                        {{ t('dashboard.upgrade_to_plus') }}
                                         <span
                                             class="ml-auto bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs px-2 py-1 rounded-full">2€</span>
                                     </a>
@@ -751,7 +753,7 @@ watch(searchQuery, debouncedSearch);
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                   d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                                         </svg>
-                                        Deconectare
+                                        {{ t('common.logout') }}
                                     </Link>
                                 </div>
                             </div>
@@ -763,30 +765,30 @@ watch(searchQuery, debouncedSearch);
                 <main class="flex-1 p-4 overflow-auto">
                     <!-- Filtre și sortare -->
                     <div class="mb-4 flex flex-wrap items-center gap-2">
-                        <span class="text-sm text-gray-500">Filtrează:</span>
+                        <span class="text-sm text-gray-500">{{ t('dashboard.filter_by') }}</span>
                         <button @click="fetchNotes('all')"
                                 :class="[currentFilter === 'all' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-700', 'py-1 px-3 rounded text-sm']">
-                            Toate
+                            {{ t('dashboard.all') }}
                         </button>
                         <button @click="fetchNotes('task')"
                                 :class="[currentFilter === 'task' ? 'bg-red-100 text-red-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-700', 'py-1 px-3 rounded text-sm flex items-center']">
                             <span class="w-2 h-2 rounded-full bg-red-500 mr-1"></span>
-                            Task
+                            {{ t('common.task') }}
                         </button>
                         <button @click="fetchNotes('idea')"
                                 :class="[currentFilter === 'idea' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-700', 'py-1 px-3 rounded text-sm flex items-center']">
                             <span class="w-2 h-2 rounded-full bg-blue-500 mr-1"></span>
-                            Idee
+                            {{ t('common.idea') }}
                         </button>
                         <button @click="fetchNotes('shopping_list')"
                                 :class="[currentFilter === 'shopping_list' ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-700', 'py-1 px-3 rounded text-sm flex items-center']">
                             <span class="w-2 h-2 rounded-full bg-green-500 mr-1"></span>
-                            Cumpărături
+                            {{ t('common.shopping') }}
                         </button>
                         <button @click="fetchNotes('reminder')"
                                 :class="[currentFilter === 'reminder' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-700', 'py-1 px-3 rounded text-sm flex items-center']">
                             <span class="w-2 h-2 rounded-full bg-orange-500 mr-1"></span>
-                            Reminder
+                            {{ t('common.reminder') }}
                         </button>
                         <button @click="fetchNotes('completed')"
                                 :class="[currentFilter === 'completed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-700', 'py-1 px-3 rounded text-sm flex items-center']">
@@ -796,7 +798,7 @@ watch(searchQuery, debouncedSearch);
                                       d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                                       clip-rule="evenodd"/>
                             </svg>
-                            Finalizate
+                            {{ t('common.completed') }}
                         </button>
                         <div class="ml-auto">
                             <button
@@ -806,7 +808,7 @@ watch(searchQuery, debouncedSearch);
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                           d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/>
                                 </svg>
-                                Cele mai noi
+                                {{ t('dashboard.newest') }}
                             </button>
                         </div>
                     </div>
@@ -829,9 +831,9 @@ watch(searchQuery, debouncedSearch);
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
-                        <p class="mt-4 text-gray-500">Nu există notițe pentru acest filtru.</p>
+                        <p class="mt-4 text-gray-500">{{ t('dashboard.no_notes_placeholder') }}</p>
                         <button class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                            Adaugă prima ta notiță
+                            {{ t('dashboard.add_first_note') }}
                         </button>
                     </div>
 
@@ -852,11 +854,11 @@ watch(searchQuery, debouncedSearch);
                                         note.note_type === 'reminder' ? 'bg-orange-500' : 'bg-gray-500'
                                     ]"></span>
                                     <span class="ml-2 text-xs font-medium text-gray-500">{{
-                                            note.note_type === 'task' ? 'Task' :
-                                            note.note_type === 'idea' ? 'Idee' :
-                                            note.note_type === 'shopping_list' ? 'Cumpărături' :
-                                            note.note_type === 'event' ? 'Eveniment' :
-                                            note.note_type === 'reminder' ? 'Reminder' : 'Notiță'
+                                            note.note_type === 'task' ? t('common.task') :
+                                            note.note_type === 'idea' ? t('common.idea') :
+                                            note.note_type === 'shopping_list' ? t('common.shopping') :
+                                            note.note_type === 'event' ? t('common.event') :
+                                            note.note_type === 'reminder' ? t('common.reminder') : t('common.note')
                                     }}</span>
                                 </div>
 
@@ -864,7 +866,7 @@ watch(searchQuery, debouncedSearch);
                                 <div class="flex items-center space-x-2">
                                     <!-- Completed toggle button - pentru toate tipurile de notițe -->
                                     <button @click.stop="toggleCompleted(note)" class="focus:outline-none"
-                                            title="Marchează ca finalizat">
+                                            :title="t('dashboard.mark_as_completed')">
                                         <svg v-if="note.is_completed" xmlns="http://www.w3.org/2000/svg"
                                              class="h-5 w-5 text-green-500 hover:text-green-600" viewBox="0 0 20 20"
                                              fill="currentColor">
@@ -882,7 +884,7 @@ watch(searchQuery, debouncedSearch);
 
                                     <!-- Favorite toggle button -->
                                     <button @click.stop="toggleFavorite(note)" class="focus:outline-none"
-                                            title="Adaugă la favorite">
+                                            :title="t('dashboard.add_to_favorites')">
                                         <svg v-if="note.is_favorite" xmlns="http://www.w3.org/2000/svg"
                                              class="h-4 w-4 text-yellow-500 fill-yellow-500 hover:text-yellow-600"
                                              viewBox="0 0 20 20" fill="currentColor">
@@ -944,7 +946,7 @@ watch(searchQuery, debouncedSearch);
                                               d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                                               clip-rule="evenodd"/>
                                     </svg>
-                                    Finalizat
+                                    {{ t('common.completed') }}
                                 </span>
                             </div>
 

@@ -36,8 +36,11 @@ npm run dev       # Development server
 
 ### Testing & Quality
 ```bash
-composer run test  # Run PHPUnit tests
+composer run test  # Run PHPUnit tests (clears config first)
 php artisan test   # Alternative test command
+php artisan test --filter=TestClassName  # Run specific test
+php artisan test --testsuite=Unit        # Run only unit tests  
+php artisan test --testsuite=Feature     # Run only feature tests
 ```
 
 ### Database
@@ -131,6 +134,15 @@ Tests are located in `tests/` directory:
 
 Run tests with `composer run test` or `php artisan test`.
 
+## Internationalization
+
+The application supports multiple languages with Laravel's localization system combined with Vue i18n:
+- Backend translations in `lang/` directory (currently English and Romanian)
+- Frontend translations in `resources/js/locales/` (en.json, ro.json)
+- Language switching via POST `/language` route with locale validation
+- Localization middleware (`Localization.php`) handles session-based locale management
+- Frontend i18n configuration in `resources/js/i18n.js` with Vue I18n
+
 ## Development Notes
 
 - Uses Inertia.js for SPA-like experience with Laravel backend
@@ -138,3 +150,6 @@ Run tests with `composer run test` or `php artisan test`.
 - AI features depend on Gemini API availability and credits
 - Queue system should be running for background job processing
 - Application uses SQLite for development (configured in database config)
+- Repository pattern implemented with service provider bindings
+- Message processing pipeline handles Telegram webhook → AI classification → Note creation
+- Uses `concurrently` npm package for running multiple dev services simultaneously
