@@ -87,8 +87,16 @@ readonly class IncomingTelegramMessageProcessorService
 
                 Log::info('Mesaj Telegram salvat în baza de date de către Repo prin service->interface.', ['message_id' => $incomingMessage->id]);
 
-                //ToDo: de facut cu AI titlu
-                $noteTitle = Str::limit($messageContent, 20);
+                // Generate AI title if user has Plus plan, otherwise use fallback
+                $noteTitle = null;
+                if ($canUseAI) {
+                    $noteTitle = $this->geminiService->generateNoteTitle($messageContent, $noteType);
+                }
+                
+                // Fallback la titlul simplu dacă AI-ul nu funcționează
+                if (!$noteTitle) {
+                    $noteTitle = Str::limit($messageContent, 20);
+                }
                 // Aici, mai târziu, vom adăuga logica de:
                 // - Găsire/Creare utilizator după $senderIdentifier
                 // - Asociere user_id la $incomingMessage

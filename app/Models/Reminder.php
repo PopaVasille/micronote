@@ -12,9 +12,6 @@ class Reminder extends Model
     /** @use HasFactory<ReminderFactory> */
     use HasFactory;
 
-    public mixed $recurrence_rule;
-    public mixed $next_remind_at;
-    public mixed $recurrence_ends_at;
     protected $fillable = [
         'note_id',
         'next_remind_at',
@@ -23,6 +20,11 @@ class Reminder extends Model
         'reminder_type',
         'message',
         'is_sent',
+    ];
+
+    protected $casts = [
+        'next_remind_at' => 'datetime',
+        'recurrence_ends_at' => 'datetime',
     ];
 
     /**

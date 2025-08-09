@@ -5,6 +5,7 @@ namespace App\Services\Classification;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\Note;
+use Illuminate\Support\Str;
 
 class GeminiClassificationService
 {
@@ -212,9 +213,11 @@ class GeminiClassificationService
         Fiecare item trebuie să fie un obiect cu cheile "text" (string) și "completed" (boolean, default false).
 
         Reguli importante:
-        1. Ignoră orice text care nu pare a fi un item de cumpărături.
-        2. Tratează cuvintele de legătură precum 'și', 'iar', 'cu' sau virgulele ca separatori de itemi.
-        3. Asigură-te că un item extras NU începe cu aceste cuvinte de legătură.
+        1. Ignoră orice text care nu pare a fi un item de cumpărături (cum ar fi nume de persoane, verbe, etc.).
+        2. Tratează cuvintele de legătură precum 'și', 'iar', 'cu', 'plus' ca separatori de itemi.
+        3. Ignoră expresii precum "pentru [nume persoană]" - extrage doar itemele de cumpărat.
+        4. Asigură-te că un item extras NU începe cu cuvinte de legătură.
+        5. Separă itemele individuale chiar dacă sunt grupate în același segment de text.
 
         Exemplu 1:
         Text: "cumpără lapte, oua si branza"
@@ -228,6 +231,17 @@ class GeminiClassificationService
         }
 
         Exemplu 2:
+        Text: "iau bere lapte si pentru mara sa iau oua"
+        Răspuns JSON:
+        {
+          "items": [
+            { "text": "bere", "completed": false },
+            { "text": "lapte", "completed": false },
+            { "text": "oua", "completed": false }
+          ]
+        }
+
+        Exemplu 3:
         Text: "lista magazin: 2 paini, 1L de lapte iar la final hartie igienica"
         Răspuns JSON:
         {
@@ -365,6 +379,97 @@ class GeminiClassificationService
 
         $regexService = app(MessageClassificationService::class);
         return $regexService->classifyMessage($messageContent);
+    }
+
+    /**
+     * Generates an AI-powered title for a note based on its content.
+     *
+     * @param string $messageContent
+     * @param string|null $noteType
+     * @return string|null The generated title or null on failure
+     */
+    public function generateNoteTitle(string $messageContent, ?string $noteType = null): ?string
+    {
+        if (!$this->isAvailable()) {
+            return null;
+        }
+
+        $prompt = $this->buildTitleGenerationPrompt($messageContent, $noteType);
+
+        try {
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'X-goog-api-key' => $this->apiKey,
+            ])->post($this->baseUrl, [
+                'contents' => [['parts' => [['text' => $prompt]]]],
+            ]);
+
+            if ($response->successful()) {
+                $result = $response->json();
+                $title = $result['candidates'][0]['content']['parts'][0]['text'] ?? null;
+
+                if ($title) {
+                    $cleanTitle = trim($title, '"\'');
+                    $cleanTitle = Str::limit($cleanTitle, 50);
+                    Log::info('Successfully generated AI title.', ['original' => $messageContent, 'title' => $cleanTitle]);
+                    return $cleanTitle;
+                }
+            } else {
+                Log::error('Gemini API error for title generation: ' . $response->body());
+            }
+        } catch (\Exception $e) {
+            Log::error('Gemini title generation failed: ' . $e->getMessage());
+        }
+
+        return null;
+    }
+
+    /**
+     * Builds the prompt for AI title generation.
+     *
+     * @param string $messageContent
+     * @param string|null $noteType
+     * @return string
+     */
+    private function buildTitleGenerationPrompt(string $messageContent, ?string $noteType = null): string
+    {
+        $typeContext = '';
+        if ($noteType) {
+            $typeContext = match($noteType) {
+                Note::TYPE_TASK => 'Aceasta este o sarcină.',
+                Note::TYPE_REMINDER => 'Aceasta este o notificare/reminder.',
+                Note::TYPE_SHOPING_LIST => 'Aceasta este o listă de cumpărături.',
+                Note::TYPE_IDEA => 'Aceasta este o idee.',
+                Note::TYPE_EVENT => 'Aceasta este un eveniment.',
+                Note::TYPE_RECIPE => 'Aceasta este o rețetă.',
+                Note::TYPE_CONTACT => 'Acestea sunt informații de contact.',
+                default => ''
+            };
+        }
+
+        return <<<PROMPT
+        Ești un asistent expert în generarea de titluri scurte și descriptive pentru notițe.
+        Sarcina ta este să creezi un titlu concis (maxim 6-8 cuvinte) pentru următorul conținut.
+
+        $typeContext
+
+        Reguli pentru titlu:
+        1. Maxim 6-8 cuvinte
+        2. Să fie descriptiv și să rezume esența conținutului
+        3. Să nu includă cuvinte de legătură inutile
+        4. Să înceapă cu literă mare
+        5. Să nu includă ghilimele sau punctuație la sfârșitul
+
+        Exemple:
+        - Conținut: "nu uita sa o suni pe mama maine la 12" -> Titlu: "Sună mama mâine la 12"
+        - Conținut: "iau bere lapte si oua" -> Titlu: "Listă cumpărături: bere, lapte, ouă"
+        - Conținut: "trebuie sa termin raportul pana vineri" -> Titlu: "Termină raportul până vineri"
+        - Conținut: "am o idee pentru aplicatia mobila" -> Titlu: "Idee pentru aplicația mobilă"
+
+        Conținut de analizat: "$messageContent"
+
+        Răspunde DOAR cu titlul generat, fără alte explicații:
+        PROMPT;
     }
 
     /**

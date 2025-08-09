@@ -53,4 +53,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+Route::get('/terms-and-conditions', function () {
+    return Inertia::render('TermsAndConditions');
+})->name('terms.show');
+
 require __DIR__.'/auth.php';
