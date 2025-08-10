@@ -9,8 +9,8 @@ function loadLocaleMessages() {
         const matched = path.match(/([A-Za-z0-9-_]+)\.json$/i);
         if (matched && matched.length > 1) {
             const locale = matched[1];
-            // Ensure we only process main files here, not term files
-            if ((locale === 'en' || locale === 'ro') && !path.includes('terms.')) {
+            // Ensure we only process main files here, not terms or privacy files
+            if ((locale === 'en' || locale === 'ro') && !path.includes('terms.') && !path.includes('privacy.')) {
                 messages[locale] = mainLocales[path].default;
             }
         }
@@ -24,6 +24,18 @@ function loadLocaleMessages() {
             const locale = matched[1]; // 'en' or 'ro'
             if (messages[locale]) {
                 messages[locale].terms = termsLocales[path].default;
+            }
+        }
+    }
+
+    // Load and merge the privacy files (privacy.en.json, privacy.ro.json)
+    const privacyLocales = import.meta.glob('./locales/privacy.*.json', { eager: true });
+    for (const path in privacyLocales) {
+        const matched = path.match(/privacy\.([a-z]{2})\.json$/i);
+        if (matched && matched.length > 1) {
+            const locale = matched[1]; // 'en' or 'ro'
+            if (messages[locale]) {
+                messages[locale].privacy = privacyLocales[path].default;
             }
         }
     }

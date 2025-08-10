@@ -1,0 +1,443 @@
+{
+  "title": "Privacy Policy and Personal Data Protection",
+  "last_updated": "Last updated: August 10, 2025",
+  "back": "Back to homepage",
+  "intro": "This policy explains how **MicroNote** collects, uses, stores and protects your personal data, in accordance with the **General Data Protection Regulation (GDPR)** and applicable Romanian legislation.",
+  "sections": [
+      {
+        "title": "1. General Information",
+        "content": "MicroNote is a note-taking service with Telegram Bot integration and AI capabilities for automatic content organization.",
+        "subsections": [
+          {
+            "title": "Data Controller:",
+            "items": [
+              "**Name:** [YOUR COMPANY NAME]",
+              "**Address:** [COMPLETE ADDRESS]",
+              "**Registration Code:** [REGISTRATION CODE]",
+              "**Contact Email:** privacy@micronote.ro",
+              "**Phone:** [PHONE NUMBER]"
+            ]
+          },
+          {
+            "title": "Data Protection Officer (DPO):",
+            "items": [
+              "**Email:** dpo@micronote.ro"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "2. Purpose and Legal Basis of Processing",
+        "content": "MicroNote processes your personal data for the following purposes:",
+        "subsections": [
+          {
+            "title": "2.1 Note-taking Service Operation",
+            "items": [
+              "**Processed data:** name, email, password (encrypted), UUID, telegram_id",
+              "**Legal basis:** Art. 6(1)(b) GDPR - contract performance",
+              "**Retention period:** duration of active account + 2 years"
+            ]
+          },
+          {
+            "title": "2.2 Telegram Bot Integration",
+            "items": [
+              "**Processed data:** telegram_id, received messages, message content, metadata",
+              "**Legal basis:** Art. 6(1)(b) GDPR - contract performance",
+              "**Retention period:** service duration + 1 year"
+            ]
+          },
+          {
+            "title": "2.3 AI Processing (Gemini API)",
+            "items": [
+              "**Processed data:** message content for classification and extraction",
+              "**Legal basis:** Art. 6(1)(f) GDPR - legitimate interests (service improvement)",
+              "**Protection measures:** data encrypted in transit and pseudonymized",
+              "**Retention period:** temporary processing, not stored with third parties"
+            ]
+          },
+          {
+            "title": "2.4 Early Access",
+            "items": [
+              "**Processed data:** email address",
+              "**Legal basis:** Art. 6(1)(a) GDPR - consent",
+              "**Retention period:** until consent withdrawal"
+            ]
+          },
+          {
+            "title": "2.5 Account Management",
+            "items": [
+              "**Processed data:** subscription plan, monthly limits, notes count",
+              "**Legal basis:** Art. 6(1)(b) GDPR - contract performance",
+              "**Retention period:** contract duration + 5 years (fiscal obligations)"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "3. Data Categories",
+        "subsections": [
+          {
+            "title": "3.1 Identification Data",
+            "items": [
+              "Full name",
+              "Email address",
+              "Auto-generated UUID",
+              "Telegram ID (optional)"
+            ]
+          },
+          {
+            "title": "3.2 Authentication Data",
+            "items": [
+              "Password (hashed)",
+              "Session tokens",
+              "Remember me tokens"
+            ]
+          },
+          {
+            "title": "3.3 Content Data",
+            "items": [
+              "Note titles and content",
+              "Note types (task, idea, shopping_list, reminder, etc.)",
+              "Note metadata (priority, completion status, favorites)",
+              "Associated tags"
+            ]
+          },
+          {
+            "title": "3.4 Messaging Data",
+            "items": [
+              "Messages received via Telegram",
+              "Message metadata (timestamp, sender_identifier)",
+              "Message processing status"
+            ]
+          },
+          {
+            "title": "3.5 Technical Data",
+            "items": [
+              "IP address",
+              "User agent",
+              "Session information",
+              "System logs"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "4. Data Transfers to Third Parties",
+        "subsections": [
+          {
+            "title": "4.1 Data Processors (Art. 28 GDPR)",
+            "content": "We work with the following processors:",
+            "items": [
+              "**Google Gemini AI** - Purpose: Message classification and content extraction; Location: EU/USA; Safeguards: SCCs + encryption",
+              "**Telegram API** - Purpose: Receiving and sending messages; Location: Germany/Netherlands; Safeguards: Processing agreements"
+            ]
+          },
+          {
+            "title": "4.2 Technical Service Providers",
+            "items": [
+              "**Hosting:** Certified hosting provider",
+              "**Backup:** Encrypted backup services",
+              "**Monitoring:** Monitoring services"
+            ]
+          },
+          {
+            "title": "4.3 We do not share data with:",
+            "items": [
+              "Marketing agencies",
+              "Data brokers",
+              "Advertising networks",
+              "Other third-party applications without explicit consent"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "5. Data Subject Rights",
+        "content": "According to GDPR, you have the following rights:",
+        "subsections": [
+          {
+            "title": "5.1 Right to Information (Art. 13-14)",
+            "content": "You have the right to be informed about data processing"
+          },
+          {
+            "title": "5.2 Right of Access (Art. 15)",
+            "items": [
+              "You can request a copy of processed personal data",
+              "**Procedure:** Send request to privacy@micronote.ro",
+              "**Deadline:** 30 days"
+            ]
+          },
+          {
+            "title": "5.3 Right to Rectification (Art. 16)",
+            "items": [
+              "You can correct inaccurate data",
+              "**Procedure:** From account or privacy@micronote.ro",
+              "**Deadline:** immediately or 30 days"
+            ]
+          },
+          {
+            "title": "5.4 Right to Erasure (Art. 17)",
+            "items": [
+              "You can request data deletion",
+              "**Procedure:** From account or privacy@micronote.ro",
+              "**Deadline:** 30 days",
+              "**Exceptions:** Legal obligations, rights exercise"
+            ]
+          },
+          {
+            "title": "5.5 Right to Restriction (Art. 18)",
+            "items": [
+              "You can request processing restriction",
+              "**Procedure:** privacy@micronote.ro",
+              "**Deadline:** 30 days"
+            ]
+          },
+          {
+            "title": "5.6 Right to Data Portability (Art. 20)",
+            "items": [
+              "You can obtain data in structured format",
+              "**Procedure:** From account (Export) or privacy@micronote.ro",
+              "**Format:** JSON, CSV",
+              "**Deadline:** 30 days"
+            ]
+          },
+          {
+            "title": "5.7 Right to Object (Art. 21)",
+            "items": [
+              "You can object to processing",
+              "**Procedure:** privacy@micronote.ro",
+              "**Deadline:** 30 days"
+            ]
+          },
+          {
+            "title": "5.8 Right not to be subject to automated decisions (Art. 22)",
+            "items": [
+              "Applicable to AI message classification",
+              "You can request human intervention",
+              "AI does not produce legal effects, only organizes content"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "6. Security Measures",
+        "subsections": [
+          {
+            "title": "6.1 Technical Measures",
+            "items": [
+              "Password encryption (Laravel Hash)",
+              "HTTPS/TLS connections",
+              "Secure session tokens",
+              "Input validation and sanitization",
+              "Encrypted backups"
+            ]
+          },
+          {
+            "title": "6.2 Organizational Measures",
+            "items": [
+              "Need-to-know access principle",
+              "GDPR staff training",
+              "Security incident procedures",
+              "Periodic audits",
+              "Data retention policies"
+            ]
+          },
+          {
+            "title": "6.3 Pseudonymization and Anonymization",
+            "items": [
+              "UUIDs for internal identification",
+              "Anonymized logs after 6 months",
+              "Anonymous statistics for analysis"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "7. Data Breaches",
+        "content": "In case of a personal data breach:",
+        "subsections": [
+          {
+            "title": "7.1 Authority Notification (Art. 33 GDPR)",
+            "items": [
+              "**Deadline:** 72 hours from awareness",
+              "**Authority:** ANSPDCP Romania"
+            ]
+          },
+          {
+            "title": "7.2 Data Subject Notification (Art. 34 GDPR)",
+            "items": [
+              "**When:** High risk to rights and freedoms",
+              "**How:** Email, in-app notification",
+              "**Deadline:** Without undue delay"
+            ]
+          },
+          {
+            "title": "7.3 Breach Register",
+            "items": [
+              "Maintained per Art. 33(5) GDPR",
+              "Available for ANSPDCP inspections"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "8. International Transfers",
+        "subsections": [
+          {
+            "title": "8.1 Adequacy Decision Countries",
+            "items": [
+              "Processing within EU/EEA",
+              "Countries with EC adequacy decisions"
+            ]
+          },
+          {
+            "title": "8.2 Adequate Safeguards (Art. 46 GDPR)",
+            "items": [
+              "Standard Contractual Clauses (SCCs)",
+              "Binding Corporate Rules (BCR) when applicable",
+              "Certifications and codes of conduct"
+            ]
+          },
+          {
+            "title": "8.3 Impact Assessments",
+            "items": [
+              "Periodic risk assessments",
+              "Additional protection measures when necessary"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "9. Data Retention",
+        "subsections": [
+          {
+            "title": "9.1 Retention Criteria",
+            "items": [
+              "Duration necessary for fulfilling purposes",
+              "Legal obligations (5 years fiscal)",
+              "Statute limitations",
+              "User consent"
+            ]
+          },
+          {
+            "title": "9.2 Specific Periods",
+            "items": [
+              "**Active account:** during usage",
+              "**Closed account:** 2 years for recovery",
+              "**Billing data:** 5 years (Fiscal Code)",
+              "**System logs:** 1 year",
+              "**Early access:** until consent withdrawal"
+            ]
+          },
+          {
+            "title": "9.3 Automatic Deletion",
+            "items": [
+              "Automated deletion procedures",
+              "Pre-deletion alerts",
+              "Deletion confirmations"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "10. Cookies and Tracking Technologies",
+        "subsections": [
+          {
+            "title": "10.1 Essential Cookies",
+            "items": [
+              "User sessions (mandatory)",
+              "Language preferences",
+              "Security settings",
+              "**Legal basis:** Art. 6(1)(f) GDPR - legitimate interest"
+            ]
+          },
+          {
+            "title": "10.2 Functional Cookies",
+            "items": [
+              "User preferences",
+              "Interface theme",
+              "**Legal basis:** Art. 6(1)(a) GDPR - consent"
+            ]
+          },
+          {
+            "title": "10.3 Analytics Cookies",
+            "items": [
+              "Not currently used",
+              "If implemented: explicit consent"
+            ]
+          },
+          {
+            "title": "10.4 Cookie Management",
+            "items": [
+              "Browser settings",
+              "Periodic deletion",
+              "Functional refusal without core service impact"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "11. Minors",
+        "subsections": [
+          {
+            "title": "11.1 Minimum Age",
+            "items": [
+              "Service intended for 16+ individuals",
+              "Under 16: parental/guardian consent"
+            ]
+          },
+          {
+            "title": "11.2 Age Verification",
+            "items": [
+              "Declaration at registration",
+              "Additional verification on suspicion"
+            ]
+          },
+          {
+            "title": "11.3 Special Minor Rights",
+            "items": [
+              "Facilitated deletion",
+              "Age-appropriate information",
+              "Enhanced protection"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "12. Policy Changes",
+        "subsections": [
+          {
+            "title": "12.1 Change Notification",
+            "items": [
+              "30-day advance notice",
+              "Email to registered users",
+              "In-app notification"
+            ]
+          },
+          {
+            "title": "12.2 Material Changes",
+            "items": [
+              "New consent when required",
+              "Right to refuse changes",
+              "Account closure option"
+            ]
+          },
+          {
+            "title": "12.3 Version History",
+            "items": [
+              "Previous versions available on request",
+              "Last update date"
+            ]
+          }
+        ]
+      }
+    ],
+  "contact": {
+    "title": "Contact and Information",
+    "general": "General Contact", 
+    "email": "Email",
+    "dpo": "Data Protection Officer",
+    "authority": "Supervisory Authority",
+    "anspdcp": "ANSPDCP - National Supervisory Authority for Personal Data Processing"
+  }
+}

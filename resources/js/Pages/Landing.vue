@@ -405,7 +405,7 @@ const pricingFeatures = computed(() => tm('pricing'));
                     <div class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-8">
                         <div class="flex space-x-6 text-sm text-blue-300">
                             <Link :href="route('terms.show')" class="hover:text-white transition-colors">{{ t('landing.footer_terms') }}</Link>
-                            <a href="#" class="hover:text-white transition-colors">{{ t('landing.footer_privacy') }}</a>
+                            <Link :href="route('privacy.show')" class="hover:text-white transition-colors">{{ t('landing.footer_privacy') }}</Link>
                             <a href="#" class="hover:text-white transition-colors">{{ t('landing.footer_contact') }}</a>
                         </div>
 

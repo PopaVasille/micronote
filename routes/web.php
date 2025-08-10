@@ -57,4 +57,8 @@ Route::get('/terms-and-conditions', function () {
     return Inertia::render('TermsAndConditions');
 })->name('terms.show');
 
+Route::get('/privacy-policy', function () {
+    return Inertia::render('PrivacyPolicy');
+})->name('privacy.show');
+
 require __DIR__.'/auth.php';

@@ -1,0 +1,443 @@
+{
+  "title": "Politica de Confidențialitate și Protecția Datelor Personale",
+  "last_updated": "Ultima actualizare: 10 august 2025",
+  "back": "Înapoi la pagina principală",
+  "intro": "Această politică explică cum **MicroNote** colectează, folosește, stochează și protejează datele dumneavoastră personale, în conformitate cu **Regulamentul General privind Protecția Datelor (GDPR)** și legislația română în vigoare.",
+  "sections": [
+      {
+        "title": "1. Informații Generale",
+        "content": "MicroNote este un serviciu de luat notițe cu integrare Telegram Bot și capabilități AI pentru organizarea automată a conținutului.",
+        "subsections": [
+          {
+            "title": "Operatorul de date personale:",
+            "items": [
+              "**Nume:** [NUMELE COMPANIEI DVS.]",
+              "**Adresa:** [ADRESA COMPLETĂ]",
+              "**CUI:** [CODUL UNIC DE ÎNREGISTRARE]",
+              "**Email contact:** privacy@micronote.ro",
+              "**Telefon:** [NUMĂRUL DE TELEFON]"
+            ]
+          },
+          {
+            "title": "Responsabilul cu protecția datelor (DPO):",
+            "items": [
+              "**Email:** dpo@micronote.ro"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "2. Scopul și Temeiul Legal al Prelucrării",
+        "content": "MicroNote prelucrează datele dumneavoastră personale în următoarele scopuri:",
+        "subsections": [
+          {
+            "title": "2.1 Funcționarea serviciului de note",
+            "items": [
+              "**Date prelucrate:** nume, email, parolă (criptată), UUID, telegram_id",
+              "**Temei legal:** Art. 6(1)(b) GDPR - executarea unui contract",
+              "**Perioada de păstrare:** pe durata contului activ + 2 ani"
+            ]
+          },
+          {
+            "title": "2.2 Integrare cu Telegram Bot",
+            "items": [
+              "**Date prelucrate:** telegram_id, mesaje primite, conținut mesaje, metadata",
+              "**Temei legal:** Art. 6(1)(b) GDPR - executarea unui contract",
+              "**Perioada de păstrare:** pe durata serviciului + 1 an"
+            ]
+          },
+          {
+            "title": "2.3 Procesarea cu AI (Gemini API)",
+            "items": [
+              "**Date prelucrate:** conținutul mesajelor pentru clasificare și extragere",
+              "**Temei legal:** Art. 6(1)(f) GDPR - interese legitime (îmbunătățirea serviciului)",
+              "**Măsuri de protecție:** datele sunt criptate în tranzit și pseudonimizate",
+              "**Perioada de păstrare:** procesare temporară, nu se stochează la terți"
+            ]
+          },
+          {
+            "title": "2.4 Acces anticipat (Early Access)",
+            "items": [
+              "**Date prelucrate:** adresa de email",
+              "**Temei legal:** Art. 6(1)(a) GDPR - consimțământ",
+              "**Perioada de păstrare:** până la retragerea consimțământului"
+            ]
+          },
+          {
+            "title": "2.5 Managementul contului",
+            "items": [
+              "**Date prelucrate:** plan de abonament, limite lunare, numărul de note",
+              "**Temei legal:** Art. 6(1)(b) GDPR - executarea unui contract",
+              "**Perioada de păstrare:** pe durata contractului + 5 ani (obligații fiscale)"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "3. Categoriile de Date Prelucrate",
+        "subsections": [
+          {
+            "title": "3.1 Date de identificare",
+            "items": [
+              "Nume complet",
+              "Adresa de email", 
+              "UUID generat automat",
+              "Telegram ID (opțional)"
+            ]
+          },
+          {
+            "title": "3.2 Date de autentificare",
+            "items": [
+              "Parolă (criptată cu hash)",
+              "Token-uri de sesiune",
+              "Token-uri de remember me"
+            ]
+          },
+          {
+            "title": "3.3 Date de conținut",
+            "items": [
+              "Titlurile și conținutul notelor",
+              "Tipul notelor (task, idea, shopping_list, reminder, etc.)",
+              "Metadatele notelor (prioritate, status completare, favorite)",
+              "Tag-urile asociate"
+            ]
+          },
+          {
+            "title": "3.4 Date de mesagerie",
+            "items": [
+              "Mesajele primite via Telegram",
+              "Metadata mesajelor (timestamp, sender_identifier)",
+              "Statusul procesării mesajelor"
+            ]
+          },
+          {
+            "title": "3.5 Date tehnice",
+            "items": [
+              "Adresa IP",
+              "User agent",
+              "Informații despre sesiune",
+              "Log-uri de sistem"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "4. Transferul Datelor către Terțe Părți",
+        "subsections": [
+          {
+            "title": "4.1 Procesatori de date (Art. 28 GDPR)",
+            "content": "Colaborăm cu următorii procesatori:",
+            "items": [
+              "**Google Gemini AI** - Scop: Clasificarea mesajelor și extragerea de conținut; Localizare: UE/SUA; Garanții: SCCs + criptare",
+              "**Telegram API** - Scop: Primirea și trimiterea mesajelor; Localizare: Germania/Olanda; Garanții: Acorduri de prelucrare"
+            ]
+          },
+          {
+            "title": "4.2 Furnizori de servicii tehnice",
+            "items": [
+              "**Hosting:** Furnizor de hosting certificat",
+              "**Backup:** Servicii de backup criptate",
+              "**Monitorizare:** Servicii de monitorizare"
+            ]
+          },
+          {
+            "title": "4.3 Nu partajăm datele cu:",
+            "items": [
+              "Agenții de marketing",
+              "Brokeri de date",
+              "Rețele publicitare",
+              "Alte aplicații terțe fără consimțământ explicit"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "5. Drepturile Subiecților de Date",
+        "content": "Conform GDPR, aveți următoarele drepturi:",
+        "subsections": [
+          {
+            "title": "5.1 Dreptul la informare (Art. 13-14)",
+            "content": "Aveți dreptul să fiți informat despre prelucrarea datelor"
+          },
+          {
+            "title": "5.2 Dreptul de acces (Art. 15)",
+            "items": [
+              "Puteți solicita o copie a datelor personale prelucrate",
+              "**Procedură:** Trimiteți cererea la privacy@micronote.ro",
+              "**Termen:** 30 de zile"
+            ]
+          },
+          {
+            "title": "5.3 Dreptul la rectificare (Art. 16)",
+            "items": [
+              "Puteți corecta datele inexacte",
+              "**Procedură:** Din cont sau la privacy@micronote.ro",
+              "**Termen:** imediat sau 30 de zile"
+            ]
+          },
+          {
+            "title": "5.4 Dreptul la ștergere (Art. 17)",
+            "items": [
+              "Puteți solicita ștergerea datelor",
+              "**Procedură:** Din cont sau la privacy@micronote.ro",
+              "**Termen:** 30 de zile",
+              "**Excepții:** Obligații legale, exercitarea drepturilor"
+            ]
+          },
+          {
+            "title": "5.5 Dreptul la restricționare (Art. 18)",
+            "items": [
+              "Puteți solicita restricționarea prelucrării",
+              "**Procedură:** privacy@micronote.ro",
+              "**Termen:** 30 de zile"
+            ]
+          },
+          {
+            "title": "5.6 Dreptul la portabilitate (Art. 20)",
+            "items": [
+              "Puteți obține datele într-un format structurat",
+              "**Procedură:** Din cont (Export) sau privacy@micronote.ro",
+              "**Format:** JSON, CSV",
+              "**Termen:** 30 de zile"
+            ]
+          },
+          {
+            "title": "5.7 Dreptul de opoziție (Art. 21)",
+            "items": [
+              "Puteți să vă opuneți prelucrării",
+              "**Procedură:** privacy@micronote.ro",
+              "**Termen:** 30 de zile"
+            ]
+          },
+          {
+            "title": "5.8 Dreptul de a nu fi supus deciziilor automate (Art. 22)",
+            "items": [
+              "Aplicabil pentru clasificarea AI a mesajelor",
+              "Puteți solicita intervenție umană",
+              "AI-ul nu produce efecte juridice, doar organizează conținutul"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "6. Măsuri de Securitate",
+        "subsections": [
+          {
+            "title": "6.1 Măsuri tehnice",
+            "items": [
+              "Criptarea parolelor (Laravel Hash)",
+              "Conexiuni HTTPS/TLS",
+              "Tokenuri de sesiune securizate", 
+              "Validare și sanitizare date de intrare",
+              "Backup-uri criptate"
+            ]
+          },
+          {
+            "title": "6.2 Măsuri organizatorice",
+            "items": [
+              "Acces pe baza principiului \"need-to-know\"",
+              "Antrenament personal GDPR",
+              "Proceduri de incident de securitate",
+              "Audit-uri periodice",
+              "Politici de păstrare date"
+            ]
+          },
+          {
+            "title": "6.3 Pseudonimizare și anonimizare",
+            "items": [
+              "UUID-uri pentru identificare internă",
+              "Log-uri anonimizate după 6 luni",
+              "Statistici anonime pentru analiză"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "7. Încălcări ale Securității Datelor",
+        "content": "În cazul unei încălcări a securității datelor personale:",
+        "subsections": [
+          {
+            "title": "7.1 Notificare autoritate (Art. 33 GDPR)",
+            "items": [
+              "**Termenul:** 72 de ore de la conștientizare",
+              "**Autoritatea:** ANSPDCP România"
+            ]
+          },
+          {
+            "title": "7.2 Notificare subiecți date (Art. 34 GDPR)",
+            "items": [
+              "**Când:** Risc ridicat pentru drepturi și libertăți",
+              "**Cum:** Email, notificare în aplicație",
+              "**Termenul:** Fără întârziere nejustificată"
+            ]
+          },
+          {
+            "title": "7.3 Registrul încălcărilor",
+            "items": [
+              "Păstrat conform Art. 33(5) GDPR",
+              "Disponibil pentru controale ANSPDCP"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "8. Transferuri Internaționale",
+        "subsections": [
+          {
+            "title": "8.1 Țări cu decizie de adecvare",
+            "items": [
+              "Prelucrări în UE/SEE",
+              "Țări cu decizie de adecvare CE"
+            ]
+          },
+          {
+            "title": "8.2 Garanții adecvate (Art. 46 GDPR)",
+            "items": [
+              "Standard Contractual Clauses (SCCs)",
+              "Binding Corporate Rules (BCR) când aplicabil",
+              "Certificări și coduri de conduită"
+            ]
+          },
+          {
+            "title": "8.3 Evaluări de impact",
+            "items": [
+              "Evaluări periodice ale riscurilor",
+              "Măsuri suplimentare de protecție când necesar"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "9. Păstrarea Datelor",
+        "subsections": [
+          {
+            "title": "9.1 Criterii de păstrare",
+            "items": [
+              "Durata necesară pentru îndeplinirea scopurilor",
+              "Obligații legale (5 ani fiscale)",
+              "Limitări de statute",
+              "Consentul utilizatorului"
+            ]
+          },
+          {
+            "title": "9.2 Perioade specifice",
+            "items": [
+              "**Contul activ:** pe durata utilizării",
+              "**Cont închis:** 2 ani pentru recuperare",
+              "**Date de facturare:** 5 ani (Codul Fiscal)",
+              "**Log-uri sistem:** 1 an",
+              "**Early access:** până la retragerea consimțământului"
+            ]
+          },
+          {
+            "title": "9.3 Ștergere automată",
+            "items": [
+              "Proceduri automate de ștergere",
+              "Alertare înainte de ștergere",
+              "Confirmări de ștergere"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "10. Cookies și Tehnologii de Urmărire",
+        "subsections": [
+          {
+            "title": "10.1 Cookies esențiale",
+            "items": [
+              "Sesiuni utilizator (obligatorii)",
+              "Preferințe limbă",
+              "Setări de securitate",
+              "**Temei legal:** Art. 6(1)(f) GDPR - interes legitim"
+            ]
+          },
+          {
+            "title": "10.2 Cookies funcționale",
+            "items": [
+              "Preferințe utilizator",
+              "Tema interface-ului", 
+              "**Temei legal:** Art. 6(1)(a) GDPR - consimțământ"
+            ]
+          },
+          {
+            "title": "10.3 Cookies analitice",
+            "items": [
+              "Nu utilizăm în prezent",
+              "Dacă implementăm: consimțământ explicit"
+            ]
+          },
+          {
+            "title": "10.4 Gestionarea cookies",
+            "items": [
+              "Setări browser",
+              "Ștergere periodică",
+              "Refuz funcțional fără impact serviciu core"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "11. Minori",
+        "subsections": [
+          {
+            "title": "11.1 Vârsta minimă",
+            "items": [
+              "Serviciul este destinat persoanelor de 16+ ani",
+              "Sub 16 ani: consimțământul părinților/tutorilor"
+            ]
+          },
+          {
+            "title": "11.2 Verificarea vârstei",
+            "items": [
+              "Declarație la înregistrare",
+              "Verificări suplimentare la suspiciune"
+            ]
+          },
+          {
+            "title": "11.3 Drepturi speciale minori",
+            "items": [
+              "Ștergere facilitată",
+              "Informații adaptate vârstei",
+              "Protecție sporită"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "12. Modificări ale Politicii",
+        "subsections": [
+          {
+            "title": "12.1 Notificarea modificărilor",
+            "items": [
+              "Notificare cu 30 de zile înainte",
+              "Email către utilizatori înregistrați",
+              "Notificare în aplicație"
+            ]
+          },
+          {
+            "title": "12.2 Modificări materiale",
+            "items": [
+              "Nou consimțământ când necesar",
+              "Dreptul de a refuza modificările",
+              "Posibilitatea de închidere cont"
+            ]
+          },
+          {
+            "title": "12.3 Istoricul versiunilor",
+            "items": [
+              "Versiuni anterioare disponibile la cerere",
+              "Data ultimei actualizări"
+            ]
+          }
+        ]
+      }
+    ],
+  "contact": {
+    "title": "Contact și Informații",
+    "general": "Contact General",
+    "email": "Email",
+    "dpo": "Responsabil Protecția Datelor",
+    "authority": "Autoritate de Supraveghere",
+    "anspdcp": "ANSPDCP - Autoritatea Națională de Supraveghere a Prelucrării Datelor cu Caracter Personal"
+  }
+}
