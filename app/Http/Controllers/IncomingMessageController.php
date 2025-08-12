@@ -6,6 +6,7 @@ use App\Models\IncomingMessage;
 use App\Services\Telegram\IncomingMessage\IncomingTelegramMessageProcessorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class IncomingMessageController extends Controller
 {
@@ -20,28 +21,27 @@ class IncomingMessageController extends Controller
      */
     public function handleTelegramWebhook(Request $request)
     {
-        Log::info('Telegram webhook received by Controller.');
+        $correlationId = Str::uuid()->toString();
+        $logContext = ['correlation_id' => $correlationId];
 
-        // Validare preliminară (opțional, Telegram e destul de sigur)
+        Log::channel('trace')->info('Telegram webhook received.', array_merge($logContext, ['request_data' => $request->all()]));
+
          if (!$request->isJson()) {
-             Log::warning('Webhook request is not JSON.');
+             Log::channel('trace')->warning('Webhook request is not JSON.', $logContext);
              return response()->json(['status' => 'error', 'message' => 'Invalid request format'], 415);
          }
 
         $data = $request->all();
 
-        // Pasăm datele către Service pentru procesare
-        $processedMessage = $this->incomingTelegramMessageProcessorService->processTelegramWebhook($data);
+        // Pasăm datele și ID-ul de corelare către Service pentru procesare
+        $processedMessage = $this->incomingTelegramMessageProcessorService->processTelegramWebhook($data, $correlationId);
 
         if ($processedMessage) {
-            // Dacă Service-ul a reușit să proceseze (salva) mesajul
-            Log::info('Webhook processed successfully by Controller.');
+            Log::channel('trace')->info('Webhook processed successfully.', $logContext);
             return response()->json(['status' => 'ok']);
         } else {
-            // Dacă Service-ul a întâmpinat o eroare (care e deja logată în Service)
-            Log::error('Webhook processing failed in Controller.');
-            // Putem returna un status diferit sau doar OK, Telegram așteaptă OK de obicei
-            return response()->json(['status' => 'error', 'message' => 'Failed to process message'], 500); // Returnăm 500 pentru a indica problema
+            Log::channel('trace')->error('Webhook processing failed.', $logContext);
+            return response()->json(['status' => 'error', 'message' => 'Failed to process message'], 500);
         }
     }
     /**

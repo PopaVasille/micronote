@@ -32,115 +32,120 @@ readonly class IncomingTelegramMessageProcessorService
      * @param  array  $data
      * @return int|mixed|null
      */
-    public function processTelegramWebhook(array $data): mixed
+    public function processTelegramWebhook(array $data, string $correlationId): mixed
     {
-        Log::info('Processing Telegram webhook data in Service.', $data);
+        $logContext = ['correlation_id' => $correlationId];
+        Log::channel('trace')->info('Processing Telegram webhook data in Service.', array_merge($logContext, ['data' => $data]));
 
-        // Validăm rapid dacă datele esențiale există
         if (!isset($data['message']['from']['id']) || !isset($data['message']['text'])) {
-            Log::warning('Received invalid Telegram webhook data (missing sender ID or text).', $data);
-            return null; // Sau poți arunca o excepție specifică
+            Log::channel('trace')->warning('Received invalid Telegram webhook data (missing sender ID or text).', array_merge($logContext, ['data' => $data]));
+            return null;
         }
 
         $senderIdentifier = $data['message']['from']['id'];
         $messageContent = $data['message']['text'];
         $messageDate = $data['message']['date'] ?? null;
-        Log::info('$senderIdentifier: ' . $senderIdentifier);
-        Log::info('$messageContent: ' . $messageContent);
-        Log::info('$messageDate: ' . $messageDate);
+        
+        $logContext['telegram_sender_id'] = $senderIdentifier;
+
+        Log::channel('trace')->info('Extracted message details.', $logContext);
 
         try {
             $user = User::where('telegram_id', $senderIdentifier)->first();
-            $userId = $user?->id;
-            Log::info('$userId: ' . $userId);
-            if($user){
-                $canUseAI = $this->classificationService->canUseAI($user);
-                $noteType = $this->classificationService->classifyMessage($messageContent,$canUseAI);
-                Log::info("Message classified as: $noteType using " . ($canUseAI ? 'AI+Regex' : 'Regex only'));
-                Log::info("Mesajul a fost clasificat ca: $noteType");
-
-                $metadata = null;
-                // Dacă notița este o listă de cumpărături, extragem itemii
-                if ($noteType === Note::TYPE_SHOPING_LIST) {
-                    $items = $this->geminiService->extractShoppingListItems($messageContent);
-                    if ($items !== null) {
-                        $metadata = ['items' => $items];
-                    }
-                }elseif ($noteType === Note::TYPE_REMINDER && $canUseAI) {
-                    $reminderDetails = $this->geminiService->extractReminderDetails($messageContent);
-                    if ($reminderDetails) {
-                        $noteContent = $reminderDetails['message'];
-                        $noteTitle = Str::limit($noteContent, 20);
-                        // Vom crea reminder-ul mai jos, după ce avem nota
-                    }
-                }
-                $incomingMessage = $this->incomingMessageRepository->create([
-                    'user_id' => $userId,
-                    'source_type' => IncomingMessage::SOURCE_TYPE_TELEGRAM,
-                    'sender_identifier' => $senderIdentifier,
-                    'message_content' => $messageContent,
-                    'metadata' => json_encode($data),
-                    'is_processed' => true,
-                    'processed_at' => now(),
-                    'ai_tag' => $noteType // Folosim clasificarea regex ca și tag AI
-                ]);
-
-                Log::info('Mesaj Telegram salvat în baza de date de către Repo prin service->interface.', ['message_id' => $incomingMessage->id]);
-
-                // Generate AI title if user has Plus plan, otherwise use fallback
-                $noteTitle = null;
-                if ($canUseAI) {
-                    $noteTitle = $this->geminiService->generateNoteTitle($messageContent, $noteType);
-                }
-                
-                // Fallback la titlul simplu dacă AI-ul nu funcționează
-                if (!$noteTitle) {
-                    $noteTitle = Str::limit($messageContent, 20);
-                }
-                // Aici, mai târziu, vom adăuga logica de:
-                // - Găsire/Creare utilizator după $senderIdentifier
-                // - Asociere user_id la $incomingMessage
-                // - Trimitere mesajul spre procesare (identificare tip notiță, extragere metadate, etc.)
-                // Dacă am găsit un user, creăm și notița
-
-                    // Creăm notița
-                $note = $this->noteRepository->create([
-                    'user_id' => $userId,
-                    'incoming_message_id' => $incomingMessage->id,
-                    'title' => $noteTitle,
-                    'content' => $messageContent,
-                    'note_type' => $noteType,
-                    'metadata' => $metadata,
-                    'created_at' => $messageDate ? date('Y-m-d H:i:s', $messageDate) : now(),
-                ]);
-                // Crearea reminderului dacă este cazul
-                if ($noteType === Note::TYPE_REMINDER && isset($reminderDetails) && $reminderDetails) {
-                    Reminder::create([
-                        'note_id' => $note->id,
-                        'next_remind_at' => $reminderDetails['remind_at'],
-                        'recurrence_rule' => $reminderDetails['recurrence_rule'] ?? null,
-                        'recurrence_ends_at' => $reminderDetails['recurrence_ends_at'] ?? null,
-                        'reminder_type' => 'telegram', // Sau din preferințele userului
-                        'message' => $noteContent ?? null,
-                    ]);
-                    Log::info('Reminder creat cu succes pentru notița ' . $note->id);
-                }
-                $user->increment('notes_count');
-                // Putem adăuga și tag-ul corespunzător, dar asta vom face mai târziu
-
-                Log::info('Notiță creată cu succes', ['note_id' => $note->id]);
-
-                return $incomingMessage->id;
-            } else {
-                Log::info('Nu s-a găsit un utilizator pentru ID-ul Telegram: ' . $senderIdentifier);
+            
+            if(!$user){
+                Log::channel('trace')->warning('User not found for Telegram ID.', $logContext);
                 return null;
             }
+            
+            $userId = $user->id;
+            $logContext['user_id'] = $userId;
+            Log::channel('trace')->info('User identified.', $logContext);
+
+            $canUseAI = $this->classificationService->canUseAI($user);
+            $logContext['can_use_ai'] = $canUseAI;
+            Log::channel('trace')->info('Checking AI eligibility.', $logContext);
+
+            $noteType = $this->classificationService->classifyMessage($messageContent, $canUseAI);
+            $logContext['note_type_classified'] = $noteType;
+            Log::channel('trace')->info("Message classified as: $noteType", $logContext);
+
+            $metadata = null;
+            if ($noteType === Note::TYPE_SHOPING_LIST) {
+                Log::channel('trace')->info('Extracting shopping list items.', $logContext);
+                $items = $this->geminiService->extractShoppingListItems($messageContent);
+                if ($items !== null) {
+                    $metadata = ['items' => $items];
+                    Log::channel('trace')->info('Shopping list items extracted.', array_merge($logContext, ['items' => $items]));
+                }
+            } elseif ($noteType === Note::TYPE_REMINDER && $canUseAI) {
+                Log::channel('trace')->info('Extracting reminder details.', $logContext);
+                $reminderDetails = $this->geminiService->extractReminderDetails($messageContent);
+                if ($reminderDetails) {
+                    $noteContent = $reminderDetails['message'];
+                    $noteTitle = Str::limit($noteContent, 20);
+                    Log::channel('trace')->info('Reminder details extracted.', array_merge($logContext, ['details' => $reminderDetails]));
+                }
+            }
+
+            $incomingMessage = $this->incomingMessageRepository->create([
+                'user_id' => $userId,
+                'source_type' => IncomingMessage::SOURCE_TYPE_TELEGRAM,
+                'sender_identifier' => $senderIdentifier,
+                'message_content' => $messageContent,
+                'metadata' => json_encode($data),
+                'is_processed' => true,
+                'processed_at' => now(),
+                'ai_tag' => $noteType
+            ]);
+            
+            $logContext['incoming_message_id'] = $incomingMessage->id;
+            Log::channel('trace')->info('Incoming message saved.', $logContext);
+
+            $noteTitle = null;
+            if ($canUseAI) {
+                Log::channel('trace')->info('Generating note title.', $logContext);
+                $noteTitle = $this->geminiService->generateNoteTitle($messageContent, $noteType);
+            }
+            
+            if (!$noteTitle) {
+                $noteTitle = Str::limit($messageContent, 20);
+                Log::channel('trace')->info('Using fallback for note title.', $logContext);
+            } else {
+                Log::channel('trace')->info('Note title generated.', array_merge($logContext, ['note_title' => $noteTitle]));
+            }
+
+            $note = $this->noteRepository->create([
+                'user_id' => $userId,
+                'incoming_message_id' => $incomingMessage->id,
+                'title' => $noteTitle,
+                'content' => $messageContent,
+                'note_type' => $noteType,
+                'metadata' => $metadata,
+                'created_at' => $messageDate ? date('Y-m-d H:i:s', $messageDate) : now(),
+            ]);
+            
+            $logContext['note_id'] = $note->id;
+            Log::channel('trace')->info('Note created successfully.', $logContext);
+
+            if ($noteType === Note::TYPE_REMINDER && isset($reminderDetails) && $reminderDetails) {
+                Reminder::create([
+                    'note_id' => $note->id,
+                    'next_remind_at' => $reminderDetails['remind_at'],
+                    'recurrence_rule' => $reminderDetails['recurrence_rule'] ?? null,
+                    'recurrence_ends_at' => $reminderDetails['recurrence_ends_at'] ?? null,
+                    'reminder_type' => 'telegram',
+                    'message' => $noteContent ?? null,
+                ]);
+                Log::channel('trace')->info('Reminder created successfully.', $logContext);
+            }
+            
+            $user->increment('notes_count');
+
+            return $incomingMessage->id;
 
         } catch (\Exception $e) {
-            Log::error('Error saving Telegram message in Service:', [
-                'error' => $e->getMessage(),
-                'data' => $data
-            ]);
+            Log::channel('trace')->error('Error processing Telegram message in Service.', array_merge($logContext, ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]));
             return null;
         }
     }

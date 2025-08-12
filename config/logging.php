@@ -118,6 +118,62 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'trace' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/trace.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 14,
+            'replace_placeholders' => true,
+        ],
+
+        'telegram' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/telegram/telegram.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 14,
+            'replace_placeholders' => true,
+        ],
+
+        'ai' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/ai/ai.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 14,
+            'replace_placeholders' => true,
+        ],
+
+        'notes' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/notes/notes.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 14,
+            'replace_placeholders' => true,
+        ],
+
+        'auth' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/auth/auth.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 14,
+            'replace_placeholders' => true,
+        ],
+
+        'jobs' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/jobs/jobs.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 14,
+            'replace_placeholders' => true,
+        ],
+
+        'system' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/system/system.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 14,
+            'replace_placeholders' => true,
+        ],
+
         'null' => [
             'driver' => 'monolog',
             'handler' => NullHandler::class,
