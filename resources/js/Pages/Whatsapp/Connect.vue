@@ -5,49 +5,45 @@ import InputError from '@/Components/InputError.vue';
 
 const { t } = useI18n();
 
-const props = defineProps({
-    currentTelegramId: String
-});
-
 const form = useForm({
-    telegram_id: props.currentTelegramId || '',
+    wa_id: '',
 });
 
 const submit = () => {
-    form.post(route('telegram.store'), {
+    form.post(route('whatsapp.store'), {
         // Redirect is handled by the controller on success
     });
 };
 </script>
 
 <template>
-    <Head :title="t('connect_page.title_telegram')" />
-    <div class="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white flex flex-col items-center justify-center p-4 sm:p-6">
+    <Head :title="t('connect_page.title_whatsapp')" />
+    <div class="min-h-screen bg-gradient-to-br from-slate-900 via-green-900 to-teal-900 text-white flex flex-col items-center justify-center p-4 sm:p-6">
 
         <div class="w-full max-w-2xl">
             <div class="bg-slate-800/50 border border-slate-700/50 rounded-2xl shadow-2xl backdrop-blur-lg p-8 sm:p-10">
                 <div class="text-center mb-8">
-                    <h1 class="text-3xl font-bold text-white">{{ t('connect_page.title_telegram') }}</h1>
-                    <p class="text-blue-200 mt-2">{{ t('connect_page.subtitle_telegram') }}</p>
+                    <h1 class="text-3xl font-bold text-white">{{ t('connect_page.title_whatsapp') }}</h1>
+                    <p class="text-green-200 mt-2">{{ t('connect_page.subtitle_whatsapp') }}</p>
                 </div>
 
                 <div class="bg-slate-900/50 rounded-xl p-6 border border-slate-700 space-y-4 mb-8">
                     <h3 class="text-lg font-medium text-white">{{ t('connect_page.instructions_title') }}</h3>
-                    <ol class="list-decimal list-inside space-y-3 text-blue-100">
-                        <li>{{ t('connect_page.instructions_telegram_step_1') }} <a href="https://t.me/userinfobot" target="_blank" class="font-bold text-white underline hover:text-blue-300 transition-colors">@userinfobot</a>.</li>
-                        <li>{{ t('connect_page.instructions_telegram_step_2') }}</li>
-                        <li>{{ t('connect_page.instructions_telegram_step_3') }}</li>
-                        <li>{{ t('connect_page.instructions_telegram_step_4') }}</li>
+                    <ol class="list-decimal list-inside space-y-3 text-green-100">
+                        <li>{{ t('connect_page.instructions_whatsapp_step_1') }} <strong class='text-white'>+40 123 456 789</strong> (exemplu)</li>
+                        <li>{{ t('connect_page.instructions_whatsapp_step_2') }}</li>
+                        <li>{{ t('connect_page.instructions_whatsapp_step_3') }}</li>
+                        <li>{{ t('connect_page.instructions_whatsapp_step_4') }}</li>
                     </ol>
                 </div>
 
                 <form @submit.prevent="submit">
                     <div class="mb-6">
-                        <label for="telegram_id" class="block text-sm font-medium text-blue-100 mb-2">{{ t('connect_page.form_label_telegram') }}</label>
-                        <input id="telegram_id" type="text" v-model="form.telegram_id" required autofocus
+                        <label for="wa_id" class="block text-sm font-medium text-green-100 mb-2">{{ t('connect_page.form_label_whatsapp') }}</label>
+                        <input id="wa_id" type="text" v-model="form.wa_id" required autofocus
                                :placeholder="t('connect_page.form_placeholder')"
-                               class="w-full px-4 py-3 bg-slate-800/60 border-2 border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-white placeholder-slate-400" />
-                        <InputError class="mt-2" :message="form.errors.telegram_id" />
+                               class="w-full px-4 py-3 bg-slate-800/60 border-2 border-slate-700 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition text-white placeholder-slate-400" />
+                        <InputError class="mt-2" :message="form.errors.wa_id" />
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -55,7 +51,7 @@ const submit = () => {
                             {{ t('connect_page.button_skip') }}
                         </Link>
                         <button type="submit" :disabled="form.processing"
-                                class="w-full group px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl font-bold text-lg shadow-lg hover:shadow-blue-500/25 transition-all transform hover:scale-105 flex items-center justify-center disabled:opacity-50">
+                                class="w-full group px-6 py-3 bg-gradient-to-r from-green-500 to-teal-600 rounded-xl font-bold text-lg shadow-lg hover:shadow-green-500/25 transition-all transform hover:scale-105 flex items-center justify-center disabled:opacity-50">
                             <span v-if="!form.processing">{{ t('connect_page.button_submit') }}</span>
                             <span v-else>{{ t('connect_page.button_submitting') }}</span>
                         </button>

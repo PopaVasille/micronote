@@ -174,5 +174,27 @@
       "Căutare avansată",
       "Statistici detaliate"
     ]
+  },
+  "connect_page": {
+    "title_telegram": "Conectare Telegram",
+    "title_whatsapp": "Conectare WhatsApp",
+    "subtitle_telegram": "Acesta este pasul final pentru a putea trimite notițe direct din Telegram.",
+    "subtitle_whatsapp": "Acesta este pasul final pentru a putea trimite notițe direct din WhatsApp.",
+    "instructions_title": "Cum obții ID-ul:",
+    "instructions_telegram_step_1": "Deschide aplicația Telegram și caută bot-ul",
+    "instructions_telegram_step_2": "Apasă pe butonul START în conversația cu bot-ul.",
+    "instructions_telegram_step_3": "Bot-ul îți va răspunde imediat cu ID-ul tău numeric.",
+    "instructions_telegram_step_4": "Copiază acel ID și introdu-l în câmpul de mai jos.",
+    "instructions_whatsapp_step_1": "Adaugă numărul nostru de WhatsApp în contactele tale:",
+    "instructions_whatsapp_step_2": "Trimite mesajul /start către acest număr.",
+    "instructions_whatsapp_step_3": "Vei primi înapoi un mesaj care conține ID-ul tău (un șir de numere).",
+    "instructions_whatsapp_step_4": "Copiază acel ID și introdu-l în câmpul de mai jos.",
+    "form_label_telegram": "ID-ul tău de Telegram",
+    "form_label_whatsapp": "ID-ul tău de WhatsApp",
+    "form_placeholder": "Introdu ID-ul numeric aici",
+    "button_skip": "Omitere pentru moment",
+    "button_submit": "Conectează și Continuă",
+    "button_submitting": "Se conectează...",
+    "success_message": "Cont conectat cu succes! Vei fi redirecționat..."
   }
 }

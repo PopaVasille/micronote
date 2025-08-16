@@ -4,6 +4,7 @@ use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Telegram\TelegramAccountController;
+use App\Http\Controllers\Whatsapp\WhatsappAccountController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
@@ -32,6 +33,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('telegram.connect');
     Route::post('/telegram/connect', [TelegramAccountController::class, 'connect'])
         ->name('telegram.store');
+
+    // WhatsApp Connect
+    Route::get('/whatsapp/connect', [WhatsappAccountController::class, 'showConnectForm'])
+        ->name('whatsapp.connect');
+    Route::post('/whatsapp/connect', [WhatsappAccountController::class, 'connect'])
+        ->name('whatsapp.store');
     //dashboard
     Route::get('/dashboard', [NoteController::class, 'dashboard'])->name('dashboard');
     Route::post('/notes', [NoteController::class, 'store'])->name('notes.store');

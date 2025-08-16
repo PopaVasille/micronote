@@ -174,5 +174,27 @@
       "Advanced search",
       "Detailed statistics"
     ]
+  },
+  "connect_page": {
+    "title_telegram": "Connect Telegram",
+    "title_whatsapp": "Connect WhatsApp",
+    "subtitle_telegram": "This is the final step to be able to send notes directly from Telegram.",
+    "subtitle_whatsapp": "This is the final step to be able to send notes directly from WhatsApp.",
+    "instructions_title": "How to get the ID:",
+    "instructions_telegram_step_1": "Open the Telegram app and search for the bot",
+    "instructions_telegram_step_2": "Press the START button in the conversation with the bot.",
+    "instructions_telegram_step_3": "The bot will immediately reply with your numeric ID.",
+    "instructions_telegram_step_4": "Copy that ID and enter it in the field below.",
+    "instructions_whatsapp_step_1": "Add our WhatsApp number to your contacts:",
+    "instructions_whatsapp_step_2": "Send the message /start to this number.",
+    "instructions_whatsapp_step_3": "You will receive a message back containing your ID (a string of numbers).",
+    "instructions_whatsapp_step_4": "Copy that ID and enter it in the field below.",
+    "form_label_telegram": "Your Telegram ID",
+    "form_label_whatsapp": "Your WhatsApp ID",
+    "form_placeholder": "Enter the numeric ID here",
+    "button_skip": "Skip for now",
+    "button_submit": "Connect and Continue",
+    "button_submitting": "Connecting...",
+    "success_message": "Account connected successfully! You will be redirected..."
   }
 }

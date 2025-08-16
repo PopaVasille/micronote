@@ -15,6 +15,8 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
+    public mixed $whatsapp_id;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -24,7 +26,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'telegram_id', // Adăugăm telegram_id la fillable
+        'telegram_id',
+        'whatsapp_id',
         'uuid',
         'plan',
         'monthly_notes_limit',
