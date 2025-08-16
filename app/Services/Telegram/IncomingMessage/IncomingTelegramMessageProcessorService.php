@@ -20,6 +20,7 @@ readonly class IncomingTelegramMessageProcessorService
      * @param  IncomingMessageRepositoryInterface  $incomingMessageRepository
      * @param  NoteRepositoryInterface  $noteRepository
      * @param  HybridMessageClassificationService  $classificationService
+     * @param  GeminiClassificationService  $geminiService
      */
     public function __construct(
         public IncomingMessageRepositoryInterface $incomingMessageRepository,
@@ -45,19 +46,19 @@ readonly class IncomingTelegramMessageProcessorService
         $senderIdentifier = $data['message']['from']['id'];
         $messageContent = $data['message']['text'];
         $messageDate = $data['message']['date'] ?? null;
-        
+
         $logContext['telegram_sender_id'] = $senderIdentifier;
 
         Log::channel('trace')->info('Extracted message details.', $logContext);
 
         try {
             $user = User::where('telegram_id', $senderIdentifier)->first();
-            
+
             if(!$user){
                 Log::channel('trace')->warning('User not found for Telegram ID.', $logContext);
                 return null;
             }
-            
+
             $userId = $user->id;
             $logContext['user_id'] = $userId;
             Log::channel('trace')->info('User identified.', $logContext);
@@ -98,7 +99,7 @@ readonly class IncomingTelegramMessageProcessorService
                 'processed_at' => now(),
                 'ai_tag' => $noteType
             ]);
-            
+
             $logContext['incoming_message_id'] = $incomingMessage->id;
             Log::channel('trace')->info('Incoming message saved.', $logContext);
 
@@ -107,7 +108,7 @@ readonly class IncomingTelegramMessageProcessorService
                 Log::channel('trace')->info('Generating note title.', $logContext);
                 $noteTitle = $this->geminiService->generateNoteTitle($messageContent, $noteType);
             }
-            
+
             if (!$noteTitle) {
                 $noteTitle = Str::limit($messageContent, 20);
                 Log::channel('trace')->info('Using fallback for note title.', $logContext);
@@ -124,7 +125,7 @@ readonly class IncomingTelegramMessageProcessorService
                 'metadata' => $metadata,
                 'created_at' => $messageDate ? date('Y-m-d H:i:s', $messageDate) : now(),
             ]);
-            
+
             $logContext['note_id'] = $note->id;
             Log::channel('trace')->info('Note created successfully.', $logContext);
 
@@ -139,7 +140,7 @@ readonly class IncomingTelegramMessageProcessorService
                 ]);
                 Log::channel('trace')->info('Reminder created successfully.', $logContext);
             }
-            
+
             $user->increment('notes_count');
 
             return $incomingMessage->id;

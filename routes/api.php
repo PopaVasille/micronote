@@ -3,6 +3,7 @@
 use App\Http\Controllers\IncomingMessageController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\Telegram\TelegramBotController;
+use App\Http\Controllers\Whatsapp\WhatsappController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -12,6 +13,8 @@ Route::get('/user', function (Request $request) {
 
 // Ruta pentru webhook-ul Telegram
 Route::post('/telegram/webhook/bot', [TelegramBotController::class, 'handleWebhook'])->name('telegram.webhook');
+// Ruta pentru webhook-ul WhatsApp (acceptă GET pentru verificare și POST pentru mesaje)
+Route::match(['get', 'post'], '/whatsapp/webhook', [WhatsappController::class, 'handleWebhook'])->name('whatsapp.webhook');
 //Route::get('/telegram/setwebhook', [TelegramBotController::class, 'setWebhook']);
 
 Route::middleware('auth:sanctum')->group(function () {

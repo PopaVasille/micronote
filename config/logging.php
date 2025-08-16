@@ -120,7 +120,7 @@ return [
 
         'trace' => [
             'driver' => 'daily',
-            'path' => storage_path('logs/trace.log'),
+            'path' => storage_path('logs/trace/trace.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => 14,
             'replace_placeholders' => true,
