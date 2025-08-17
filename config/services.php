@@ -40,5 +40,10 @@ return [
     'telegram-bot-api' => [
         'token' => env('TELEGRAM_BOT_TOKEN'),
     ],
+    'whatsapp' => [
+        'token' => env('WHATSAPP_TOKEN'),
+        'from-phone-number-id' => env('WHATSAPP_FROM'),
+        'webhook_verify_token' => env('WHATSAPP_WEBHOOK_TOKEN'),
+    ],
 
 ];

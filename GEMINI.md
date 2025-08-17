@@ -153,7 +153,7 @@ Run tests with `composer run test` or `php artisan test`.
 
 **Stil de răspuns:** Explică pas cu pas (coleg junior), folosește exemple în română, aplică KISS, împarte explicațiile complexe, oferă analogii, indică alternative (cu trade-off-uri).
 
-**Comunicare:** Ton prietenos/profesional, răspunsuri structurate (explicație, cod, concluzie), alertează la limita de tokeni/context insuficient, motivează deciziile tehnice.
+**Comunicare:** Ton prietenos/profesional, răspunsuri structurate (explicație, cod, concluzie) motivează deciziile tehnice.
 
 **Comportament fișiere:** Analizează documentația, nu inventează cerințe, extrage entități/fluxuri/interacțiuni, prioritizează coerența business-arhitectură.
 

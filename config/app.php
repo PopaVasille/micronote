@@ -123,4 +123,17 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Message Processing Configuration
+    |--------------------------------------------------------------------------
+    |
+    | This option determines whether incoming messages (Telegram/WhatsApp)
+    | should be processed synchronously or asynchronously. In development,
+    | synchronous processing is useful for immediate debugging and testing.
+    |
+    */
+
+    'process_messages_sync' => env('PROCESS_MESSAGES_SYNC', false),
+
 ];

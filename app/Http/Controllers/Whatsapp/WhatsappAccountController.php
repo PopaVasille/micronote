@@ -27,13 +27,14 @@ class WhatsappAccountController extends Controller
     public function connect(Request $request)
     {
         $request->validate([
-            'wa_id' => ['required', 'string', 'regex:/^[0-9]+$/', 'unique:users,whatsapp_id'],
+            'whatsapp_id' => ['required', 'string', 'regex:/^[0-9]+$/', 'unique:users,whatsapp_id,' . Auth::id()],
         ]);
 
         $user = Auth::user();
-        $user->whatsapp_id = $request->input('wa_id');
+        $user->whatsapp_id = $request->input('whatsapp_id');
         $user->save();
 
-        return redirect()->route('dashboard')->with('success', 'Your WhatsApp account has been successfully connected.');
+        return redirect()->route('dashboard')->with('success', 'Contul WhatsApp a fost conectat cu succes!');
     }
+
 }

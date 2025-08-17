@@ -1,9 +1,8 @@
 <?php
 
-use App\Http\Controllers\IncomingMessageController;
 use App\Http\Controllers\NoteController;
-use App\Http\Controllers\Telegram\TelegramBotController;
-use App\Http\Controllers\Whatsapp\WhatsappController;
+use App\Http\Controllers\Telegram\TelegramController;
+use App\Http\Controllers\WhatsAppController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -11,10 +10,10 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-// Ruta pentru webhook-ul Telegram
-Route::post('/telegram/webhook/bot', [TelegramBotController::class, 'handleWebhook'])->name('telegram.webhook');
+// Ruta pentru webhook-ul Telegram (refactorizat cu noua arhitectură)
+Route::post('/telegram/webhook/bot', [TelegramController::class, 'handleWebhook'])->name('telegram.webhook');
 // Ruta pentru webhook-ul WhatsApp (acceptă GET pentru verificare și POST pentru mesaje)
-Route::match(['get', 'post'], '/whatsapp/webhook', [WhatsappController::class, 'handleWebhook'])->name('whatsapp.webhook');
+Route::match(['get', 'post'], '/whatsapp/webhook', [WhatsAppController::class, 'webhook'])->name('whatsapp.webhook');
 //Route::get('/telegram/setwebhook', [TelegramBotController::class, 'setWebhook']);
 
 Route::middleware('auth:sanctum')->group(function () {

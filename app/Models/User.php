@@ -28,6 +28,7 @@ class User extends Authenticatable
         'password',
         'telegram_id',
         'whatsapp_id',
+        'whatsapp_phone',
         'uuid',
         'plan',
         'monthly_notes_limit',
