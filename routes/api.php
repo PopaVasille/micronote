@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\Telegram\TelegramController;
-use App\Http\Controllers\WhatsAppController;
+use App\Http\Controllers\WhatsApp\WhatsAppController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 

@@ -248,7 +248,11 @@ readonly class UnifiedMessageProcessorService
         array $logContext
     ): ?IncomingMessage {
         try {
-            $sourceType = $channelType === 'telegram' ? IncomingMessage::SOURCE_TYPE_TELEGRAM : $channelType;
+            $sourceType = match ($channelType) {
+                'telegram' => IncomingMessage::SOURCE_TYPE_TELEGRAM,
+                'whatsapp' => IncomingMessage::SOURCE_TYPE_WHATSAPP,
+                default => $channelType
+            };
             
             $incomingMessage = $this->incomingMessageRepository->create([
                 'user_id' => $userId,
