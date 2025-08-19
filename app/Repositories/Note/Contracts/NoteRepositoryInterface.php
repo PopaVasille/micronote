@@ -10,16 +10,32 @@ interface NoteRepositoryInterface
 {
     /**
      * @param  int  $userId
+     * @param  string|null  $searchQuery
      * @return Collection
      */
-    public function getAllByUserId(int $userId): Collection;
+    public function getAllByUserId(int $userId, ?string $searchQuery = null): Collection;
 
     /**
      * @param  int  $userId
      * @param  string  $noteType
+     * @param  string|null  $searchQuery
      * @return Collection
      */
-    public function getByUserIdAndType(int $userId, string $noteType): Collection;
+    public function getByUserIdAndType(int $userId, string $noteType, ?string $searchQuery = null): Collection;
+
+    /**
+     * @param  int  $userId
+     * @param  string|null  $searchQuery
+     * @return Collection
+     */
+    public function getFavoriteByUserId(int $userId, ?string $searchQuery = null): Collection;
+
+    /**
+     * @param  int  $userId
+     * @param  string|null  $searchQuery
+     * @return Collection
+     */
+    public function getCompletedByUserId(int $userId, ?string $searchQuery = null): Collection;
 
     /**
      * @param  array  $data

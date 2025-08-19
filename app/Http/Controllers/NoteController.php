@@ -27,10 +27,10 @@ class NoteController extends Controller
         $searchQuery = $request->query('search');
 
         $notes = match($filter) {
-            'all' => $this->noteRepository->getAllByUserId($user->id,$searchQuery),
-            'favorite' => $this->noteRepository->getFavoriteByUserId($user->id,$searchQuery),
-            'completed' => $this->noteRepository->getCompletedByUserId($user->id,$searchQuery),
-            default => $this->noteRepository->getByUserIdAndType($user->id, $filter)
+            'all' => $this->noteRepository->getAllByUserId($user->id, $searchQuery),
+            'favorite' => $this->noteRepository->getFavoriteByUserId($user->id, $searchQuery),
+            'completed' => $this->noteRepository->getCompletedByUserId($user->id, $searchQuery),
+            default => $this->noteRepository->getByUserIdAndType($user->id, $filter, $searchQuery)
         };
 
         Log::info('$user: '.$user);

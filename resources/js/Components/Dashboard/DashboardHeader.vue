@@ -28,6 +28,7 @@ const pageTitle = computed(() => {
 });
 
 const updateSearchQuery = (event) => {
+    console.log(event.target.value)
     emit('update:modelValue', event.target.value);
 };
 

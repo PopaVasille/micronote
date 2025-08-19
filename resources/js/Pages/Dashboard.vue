@@ -34,6 +34,7 @@ const user = computed(() => page.props.auth.user);
 // Methods
 const fetchNotes = (filter = currentFilter.value, search = searchQuery.value) => {
     isLoading.value = true;
+    console.log('fetchNotes called with filter:', filter, 'search:', search);
     router.get(route('dashboard'), {
         filter: filter,
         search: search,
@@ -57,6 +58,7 @@ let debounceTimeout = null;
 const debouncedSearch = () => {
     clearTimeout(debounceTimeout);
     debounceTimeout = setTimeout(() => {
+        console.log('Debounced search triggered with:', searchQuery.value);
         fetchNotes();
     }, 300);
 };
@@ -162,7 +164,7 @@ watch(searchQuery, debouncedSearch);
             <div class="flex-1 flex flex-col min-h-screen overflow-hidden">
                 <DashboardHeader
                     :current-filter="currentFilter"
-                    v-model:search-query="searchQuery"
+                    v-model="searchQuery"
                     :user="user"
                     @toggle-sidebar="showSidebar = !showSidebar"
                 />

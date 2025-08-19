@@ -31,8 +31,10 @@ class EloquentNoteRepository implements NoteRepositoryInterface
             ->orderBy('created_at', 'desc')
             ->with('tags');
         if($searchQuery){
-            $query->where('title', 'like', "%$searchQuery%")
-                ->orWhere('content', 'like', "%$searchQuery%");
+            $query->where(function($q) use ($searchQuery) {
+                $q->where('title', 'like', '%' . addslashes($searchQuery) . '%')
+                    ->orWhere('content', 'like', '%' . addslashes($searchQuery) . '%');
+            });
         }
         return  $query->get();
     }
@@ -46,8 +48,10 @@ class EloquentNoteRepository implements NoteRepositoryInterface
             ->orderBy('created_at', 'desc')
             ->with('tags');
             if($searchQuery){
-                $query->where('title', 'like', "%$searchQuery%")
-                    ->orWhere('content', 'like', "%$searchQuery%");
+                $query->where(function($q) use ($searchQuery) {
+                    $q->where('title', 'like', '%' . addslashes($searchQuery) . '%')
+                        ->orWhere('content', 'like', '%' . addslashes($searchQuery) . '%');
+                });
             }
           return  $query->get();
     }
@@ -60,8 +64,10 @@ class EloquentNoteRepository implements NoteRepositoryInterface
             ->with('tags');
 
         if($searchQuery){
-            $query->where('title', 'like', "%$searchQuery%")
-                  ->orWhere('content', 'like', "%$searchQuery%");
+            $query->where(function($q) use ($searchQuery) {
+                $q->where('title', 'like', '%' . addslashes($searchQuery) . '%')
+                    ->orWhere('content', 'like', '%' . addslashes($searchQuery) . '%');
+            });
         }
         return  $query->get();
     }
@@ -71,15 +77,23 @@ class EloquentNoteRepository implements NoteRepositoryInterface
      * @param  string  $noteType
      * @return Collection
      */
-    public function getByUserIdAndType(int $userId, string $noteType): Collection
+    public function getByUserIdAndType(int $userId, string $noteType, ?string $searchQuery = null): Collection
     {
-        return $this->note->where('user_id', $userId)
+        $query = $this->note->where('user_id', $userId)
             ->where('note_type', $noteType)
             ->where('is_completed', false)
             ->whereNull('deleted_at')
             ->orderBy('created_at', 'desc')
-            ->with('tags')
-            ->get();
+            ->with('tags');
+
+        if($searchQuery){
+            $query->where(function($q) use ($searchQuery) {
+                $q->where('title', 'like', '%' . addslashes($searchQuery) . '%')
+                    ->orWhere('content', 'like', '%' . addslashes($searchQuery) . '%');
+            });
+        }
+
+        return $query->get();
     }
 
     /**
