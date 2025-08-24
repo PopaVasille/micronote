@@ -16,9 +16,7 @@ Route::post('/language', function (Request $request) {
     $request->validate([
         'locale' => 'required|in:en,ro',
     ]);
-
-    session()->put('locale', $request->locale);
-
+    session()->put('locale', $request->input('locale'));
     return redirect()->back();
 })->name('language.switch');
 
@@ -27,7 +25,7 @@ Route::get('/', [LandingPageController::class, 'show'])->name('landing');
 Route::post('/early-access', [LandingPageController::class, 'store'])->name('early-access.store');
 
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware('auth|verified')->group(function () {
     //telegram Connect
     Route::get('/telegram/connect', [TelegramAccountController::class, 'showConnectForm'])
         ->name('telegram.connect');
