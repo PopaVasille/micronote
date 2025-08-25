@@ -10,16 +10,17 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-// Ruta pentru webhook-ul Telegram (refactorizat cu noua arhitectură)
-Route::post('/telegram/webhook/bot', [TelegramController::class, 'handleWebhook'])
-    ->middleware(['verify.telegram.webhook'])
-    ->name('telegram.webhook');
-// Ruta pentru webhook-ul WhatsApp (acceptă GET pentru verificare și POST pentru mesaje)
-Route::match(['get', 'post'], '/whatsapp/webhook', [WhatsappController::class, 'webhook'])
-    ->name('whatsapp.webhook');
-//Route::get('/telegram/setwebhook', [TelegramBotController::class, 'setWebhook']);
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::post('/telegram/webhook/bot', [TelegramController::class, 'handleWebhook'])
+    ->middleware(['verify.telegram.webhook', 'throttle:webhook-telegram'])
+    ->name('telegram.webhook');
+
+Route::match(['get', 'post'], '/whatsapp/webhook', [WhatsappController::class, 'webhook'])
+    ->middleware(['throttle:webhook-whatsapp'])
+    ->name('whatsapp.webhook');
+
+
+Route::middleware(['auth:sanctum', 'throttle:api-users'])->group(function () {
     // Listarea notițelor utilizatorului
     Route::get('/notes', [NoteController::class, 'dashboard'])
         ->name('api.notes.dashboard');

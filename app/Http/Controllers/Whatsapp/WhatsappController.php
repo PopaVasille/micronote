@@ -69,7 +69,6 @@ class WhatsAppController extends Controller
         $challenge = $request->query('hub_challenge');
 
         Log::channel('trace')->info('WhatsAppController: Webhook verification request', [
-            'hub_mode' => $mode,
             'token_provided' => !empty($token),
             'challenge_provided' => !empty($challenge)
         ]);
