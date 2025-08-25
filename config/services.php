@@ -39,6 +39,7 @@ return [
     ],
     'telegram-bot-api' => [
         'token' => env('TELEGRAM_BOT_TOKEN'),
+        'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET'),
     ],
     'whatsapp' => [
         'token' => env('WHATSAPP_TOKEN'),

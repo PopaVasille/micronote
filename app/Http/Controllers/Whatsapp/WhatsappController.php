@@ -20,7 +20,7 @@ use Illuminate\Support\Str;
 class WhatsAppController extends Controller
 {
     public function __construct(
-        private CommandProcessor $commandProcessor
+        private readonly CommandProcessor $commandProcessor
     ) {}
 
     /**

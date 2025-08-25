@@ -22,10 +22,12 @@ Route::post('/language', function (Request $request) {
 
 // Landing Page
 Route::get('/', [LandingPageController::class, 'show'])->name('landing');
-Route::post('/early-access', [LandingPageController::class, 'store'])->name('early-access.store');
+Route::post('/early-access', [LandingPageController::class, 'store'])
+    ->middleware('throttle:early-access')
+    ->name('early-access.store');
 
 
-Route::middleware('auth|verified')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     //telegram Connect
     Route::get('/telegram/connect', [TelegramAccountController::class, 'showConnectForm'])
         ->name('telegram.connect');

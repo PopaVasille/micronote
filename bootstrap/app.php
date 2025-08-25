@@ -18,7 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        //
+        // Register webhook security middleware
+        $middleware->alias([
+            'verify.telegram.webhook' => \App\Http\Middleware\VerifyTelegramWebhook::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
