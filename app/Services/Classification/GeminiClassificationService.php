@@ -4,6 +4,7 @@ namespace App\Services\Classification;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use App\Models\Note;
 use Illuminate\Support\Str;
 
@@ -26,6 +27,11 @@ class GeminiClassificationService
      */
     public function classifyMessage(string $messageContent): string
     {
+        // Check rate limits before making API call
+        if (!$this->isWithinRateLimits()) {
+            return $this->fallbackToRegexClassification($messageContent);
+        }
+
         try {
             // Prompt-ul optimizat pentru clasificare
             $prompt = $this->buildClassificationPrompt($messageContent);
@@ -46,6 +52,8 @@ class GeminiClassificationService
             ]);
 
             if ($response->successful()) {
+                // Increment rate limiters only after successful call
+                $this->incrementRateLimiters();
                 $result = $response->json();
                 return $this->parseClassificationResponse($result);
             } else {
@@ -159,6 +167,12 @@ class GeminiClassificationService
             return null;
         }
 
+        // Check rate limits before making API call
+        if (!$this->isWithinRateLimits()) {
+            Log::info('Gemini API rate limit exceeded - skipping shopping list extraction');
+            return null;
+        }
+
         $prompt = $this->buildShoppingListPrompt($messageContent);
 
         try {
@@ -174,6 +188,8 @@ class GeminiClassificationService
             ]);
 
             if ($response->successful()) {
+                // Increment rate limiters only after successful call
+                $this->incrementRateLimiters();
                 $result = $response->json();
                 $jsonText = $result['candidates'][0]['content']['parts'][0]['text'] ?? null;
 
@@ -269,6 +285,12 @@ class GeminiClassificationService
             return null;
         }
 
+        // Check rate limits before making API call
+        if (!$this->isWithinRateLimits()) {
+            Log::info('Gemini API rate limit exceeded - skipping reminder extraction');
+            return null;
+        }
+
         $prompt = $this->buildReminderExtractionPrompt($messageContent);
 
         try {
@@ -283,6 +305,8 @@ class GeminiClassificationService
             ]);
 
             if ($response->successful()) {
+                // Increment rate limiters only after successful call
+                $this->incrementRateLimiters();
                 $result = $response->json();
                 $jsonText = $result['candidates'][0]['content']['parts'][0]['text'] ?? null;
 
@@ -394,6 +418,12 @@ class GeminiClassificationService
             return null;
         }
 
+        // Check rate limits before making API call
+        if (!$this->isWithinRateLimits()) {
+            Log::info('Gemini API rate limit exceeded - skipping title generation');
+            return null;
+        }
+
         $prompt = $this->buildTitleGenerationPrompt($messageContent, $noteType);
 
         try {
@@ -405,6 +435,8 @@ class GeminiClassificationService
             ]);
 
             if ($response->successful()) {
+                // Increment rate limiters only after successful call
+                $this->incrementRateLimiters();
                 $result = $response->json();
                 $title = $result['candidates'][0]['content']['parts'][0]['text'] ?? null;
 
@@ -480,5 +512,42 @@ class GeminiClassificationService
     public function isAvailable(): bool
     {
         return !empty($this->apiKey);
+    }
+
+    /**
+     * Check if Gemini API is within rate limits before making a call
+     *
+     * @return bool
+     */
+    protected function isWithinRateLimits(): bool
+    {
+        $rpmLimit = config('services.gemini.rpm_limit');
+        $dailyLimit= config('services.gemini.daily_limit');
+
+
+        // Check both RPM and daily limits
+        $withinRpmLimit = !RateLimiter::tooManyAttempts('gemini-api-rpm', $rpmLimit);
+        $withinDailyLimit = !RateLimiter::tooManyAttempts('gemini-api-daily', $dailyLimit);
+
+        if (!$withinRpmLimit) {
+            Log::warning('Gemini API: RPM limit (30/minute) exceeded - using fallback');
+            return false;
+        }
+
+        if (!$withinDailyLimit) {
+            Log::warning('Gemini API: Daily limit (1500/day) exceeded - using fallback');
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Increment rate limiting counters after successful API call
+     */
+    protected function incrementRateLimiters(): void
+    {
+        RateLimiter::hit('gemini-api-rpm');
+        RateLimiter::hit('gemini-api-daily');
     }
 }

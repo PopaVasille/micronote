@@ -60,9 +60,9 @@ class AppServiceProvider extends ServiceProvider
                 });
         });
 
-        // Telegram Webhook Rate Limiting - 30 requests per minute (AI processing limit)
+        // Telegram Webhook Rate Limiting - 500 requests per minute (high throughput)
         RateLimiter::for('webhook-telegram', function (Request $request) {
-            return Limit::perMinute(30)
+            return Limit::perMinute(500)
                 ->by($request->ip())
                 ->response(function () {
                     \Illuminate\Support\Facades\Log::warning('Telegram webhook rate limit exceeded', [
@@ -72,14 +72,39 @@ class AppServiceProvider extends ServiceProvider
                 });
         });
 
-        // WhatsApp Webhook Rate Limiting - 30 requests per minute (AI processing limit)
+        // WhatsApp Webhook Rate Limiting - 500 requests per minute (high throughput)
         RateLimiter::for('webhook-whatsapp', function (Request $request) {
-            return Limit::perMinute(30)
+            return Limit::perMinute(500)
                 ->by($request->ip())
                 ->response(function () {
                     \Illuminate\Support\Facades\Log::warning('WhatsApp webhook rate limit exceeded', [
                         'ip' => request()->ip(),
                         'time' => now()
+                    ]);
+                });
+        });
+
+        // Gemini API Rate Limiting - 30 RPM and 1500 requests/day
+        RateLimiter::for('gemini-api-rpm', function () {
+            $rpmLimit = config('services.gemini.rpm_limit');
+            return Limit::perMinute($rpmLimit)
+                ->by('gemini-api-global')
+                ->response(function () {
+                    \Illuminate\Support\Facades\Log::warning('Gemini API rate limit exceeded (30 RPM)', [
+                        'time' => now(),
+                        'limit_type' => 'per_minute'
+                    ]);
+                });
+        });
+
+        RateLimiter::for('gemini-api-daily', function () {
+            $dailyLimit= config('services.gemini.daily_limit');
+            return Limit::perDay($dailyLimit)
+                ->by('gemini-api-global')
+                ->response(function () {
+                    \Illuminate\Support\Facades\Log::warning('Gemini API rate limit exceeded (1500/day)', [
+                        'time' => now(),
+                        'limit_type' => 'per_day'
                     ]);
                 });
         });

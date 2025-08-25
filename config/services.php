@@ -36,6 +36,8 @@ return [
     ],
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY'),
+        'rpm_limit' => env('GEMINI_RATE_LIMITS_RPM', 30),
+        'daily_limit' => env('GEMINI_RATE_LIMITS_DAILY', 1500),
     ],
     'telegram-bot-api' => [
         'token' => env('TELEGRAM_BOT_TOKEN'),
