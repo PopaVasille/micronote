@@ -7,7 +7,7 @@ import CreateNoteModal from '@/Components/Note/CreateNoteModal.vue';
 import NoteDetailModal from '@/Components/Note/NoteDetailModal.vue';
 import offlineStorage from '@/utils/offlineStorage';
 
-import TelegramAlert from '@/Components/Dashboard/TelegramAlert.vue';
+import MessagingPlatformsAlert from '@/Components/Dashboard/MessagingPlatformsAlert.vue';
 import OfflineStatusBanner from '@/Components/Dashboard/OfflineStatusBanner.vue';
 import DashboardSidebar from '@/Components/Dashboard/DashboardSidebar.vue';
 import DashboardHeader from '@/Components/Dashboard/DashboardHeader.vue';
@@ -148,7 +148,7 @@ watch(searchQuery, debouncedSearch);
 <template>
     <Head :title="t('common.notes')"/>
     <AuthenticatedLayout>
-        <TelegramAlert :show="!user.telegram_id" />
+        <MessagingPlatformsAlert :show="!user.telegram_id && !user.whatsapp_id" />
         <OfflineStatusBanner :is-offline="isOffline" :has-pending-changes="hasPendingChanges" />
 
         <div class="flex h-screen bg-gray-50">

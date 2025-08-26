@@ -29,7 +29,8 @@
     "cancel": "Anulează",
     "delete": "Șterge",
     "edit": "Editează",
-    "confirm": "Confirmă"
+    "confirm": "Confirmă",
+    "back_to_dashboard": "Înapoi la panoul principal"
   },
   "landing": {
     "title": "Bun venit la MicroNote",
@@ -109,6 +110,9 @@
   "dashboard": {
     "telegram_alert": "Nu ai conectat contul Telegram. Notițele trimise prin Telegram nu vor fi salvate în contul tău.",
     "telegram_connect_link": "Conectează Telegram acum",
+    "messaging_platforms_alert": "Nu ai conectat încă nicio platformă de messaging. Conectează-le pentru a putea trimite notițe instant.",
+    "connect_messaging_platforms": "Conectează platformele acum",
+    "connect_platforms": "Conectează Platformele",
     "offline_alert": "Ești offline. Poți crea notițe care vor fi sincronizate automat când revii online.",
     "sync_alert": "Sincronizare în curs... Unele notițe create offline sunt în curs de sincronizare.",
     "plan_free": "Plan Gratuit",
@@ -132,6 +136,17 @@
     "interface_language_help": "Alege limba pentru meniuri, butoane și mesaje",
     "manage_account": "Gestionează setările și preferințele contului tău",
     "profile_information": "Informații profil",
+    "messaging_platforms": "Platforme de Messaging",
+    "messaging_platforms_description": "Conectează platformele de messaging preferate pentru a trimite notițe instant.",
+    "no_platforms_connected": "Nicio platformă conectată",
+    "connect_platforms_to_start": "Conectează platforme pentru a începe să trimiți notițe prin Telegram sau WhatsApp.",
+    "connect_platforms": "Conectează Platformele",
+    "connected": "Conectat",
+    "not_connected": "Neconectat",
+    "connect_now": "Conectează acum",
+    "active": "Activ",
+    "add_another_platform": "Adaugă Altă Platformă",
+    "add_another_platform_description": "Poți conecta platforme suplimentare pentru și mai multă flexibilitate.",
     "password_security": "Parolă și Securitate",
     "danger_zone": "Zonă Periculoasă"
   },
@@ -196,5 +211,22 @@
     "button_submit": "Conectează și Continuă",
     "button_submitting": "Se conectează...",
     "success_message": "Cont conectat cu succes! Vei fi redirecționat..."
+  },
+  "platform_selection": {
+    "title": "Alege Platforma",
+    "welcome_title": "Bun venit la MicroNote!",
+    "welcome_subtitle": "Alege cum ai dori să trimiți notițe în contul tău. Poți adăuga mai multe platforme mai târziu.",
+    "telegram_description": "Trimite notițe direct prin mesaje Telegram către botul tău personal.",
+    "telegram_feature_1": "Creare instantanee de notițe prin mesaje",
+    "telegram_feature_2": "Categorizare inteligentă prin AI",
+    "telegram_feature_3": "Funcționează cu orice client Telegram",
+    "connect_with_telegram": "Conectează cu Telegram",
+    "whatsapp_description": "Trimite notițe prin mesaje WhatsApp către numărul tău dedicat.",
+    "whatsapp_feature_1": "Interfața familiară WhatsApp",
+    "whatsapp_feature_2": "Transcriere mesaje vocale",
+    "whatsapp_feature_3": "Disponibilitate cross-platform",
+    "connect_with_whatsapp": "Conectează cu WhatsApp",
+    "skip_message": "Poți omite acest pas și conecta platformele mai târziu din setări.",
+    "skip_button": "Continuă la Dashboard"
   }
 }

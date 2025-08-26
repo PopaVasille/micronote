@@ -29,7 +29,8 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "back_to_dashboard": "Back to Dashboard"
   },
   "landing": {
     "title": "Welcome to MicroNote",
@@ -109,6 +110,9 @@
   "dashboard": {
     "telegram_alert": "You have not connected your Telegram account. Notes sent via Telegram will not be saved to your account.",
     "telegram_connect_link": "Connect Telegram now",
+    "messaging_platforms_alert": "You haven't connected any messaging platforms yet. Connect them to start sending notes instantly.",
+    "connect_messaging_platforms": "Connect platforms now",
+    "connect_platforms": "Connect Platforms",
     "offline_alert": "You are offline. You can create notes that will be automatically synced when you get back online.",
     "sync_alert": "Synchronization in progress... Some notes created offline are being synchronized.",
     "plan_free": "Free Plan",
@@ -132,6 +136,17 @@
     "interface_language_help": "Choose the language for menus, buttons, and messages",
     "manage_account": "Manage your account settings and preferences",
     "profile_information": "Profile Information",
+    "messaging_platforms": "Messaging Platforms",
+    "messaging_platforms_description": "Connect your preferred messaging platforms to send notes instantly.",
+    "no_platforms_connected": "No platforms connected",
+    "connect_platforms_to_start": "Connect platforms to start sending notes via Telegram or WhatsApp.",
+    "connect_platforms": "Connect Platforms",
+    "connected": "Connected",
+    "not_connected": "Not connected",
+    "connect_now": "Connect now",
+    "active": "Active",
+    "add_another_platform": "Add Another Platform",
+    "add_another_platform_description": "You can connect additional platforms for even more flexibility.",
     "password_security": "Password & Security",
     "danger_zone": "Danger Zone"
   },
@@ -196,5 +211,22 @@
     "button_submit": "Connect and Continue",
     "button_submitting": "Connecting...",
     "success_message": "Account connected successfully! You will be redirected..."
+  },
+  "platform_selection": {
+    "title": "Choose Your Platform",
+    "welcome_title": "Welcome to MicroNote!",
+    "welcome_subtitle": "Choose how you'd like to send notes to your account. You can always add more platforms later.",
+    "telegram_description": "Send notes directly through Telegram messages to your personal bot.",
+    "telegram_feature_1": "Instant note creation via messages",
+    "telegram_feature_2": "AI-powered smart categorization",
+    "telegram_feature_3": "Works with any Telegram client",
+    "connect_with_telegram": "Connect with Telegram",
+    "whatsapp_description": "Send notes through WhatsApp messages to your dedicated number.",
+    "whatsapp_feature_1": "Familiar WhatsApp interface",
+    "whatsapp_feature_2": "Voice message transcription",
+    "whatsapp_feature_3": "Cross-platform availability",
+    "connect_with_whatsapp": "Connect with WhatsApp",
+    "skip_message": "You can also skip this step and connect your platforms later from settings.",
+    "skip_button": "Continue to Dashboard"
   }
 }

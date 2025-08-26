@@ -46,6 +46,6 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect(route('telegram.connect', absolute: false));
+        return redirect(route('platform.selection', absolute: false));
     }
 }
