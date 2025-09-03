@@ -71,4 +71,47 @@ class WhatsAppReminderService
             return false;
         }
     }
+
+    /**
+     * Send simple text message via WhatsApp
+     *
+     * @param string $recipientPhone
+     * @param string $message
+     * @return bool
+     */
+    public function sendSimpleTextMessage(string $recipientPhone, string $message): bool
+    {
+        try {
+            $url = "https://graph.facebook.com/{$this->apiVersion}/{$this->phoneNumberId}/messages";
+
+            $response = Http::withToken($this->accessToken)
+                ->post($url, [
+                    'messaging_product' => 'whatsapp',
+                    'to' => $recipientPhone,
+                    'type' => 'text',
+                    'text' => [
+                        'body' => $message
+                    ]
+                ]);
+
+            if ($response->successful()) {
+                Log::info("WhatsApp text message sent successfully to {$recipientPhone}");
+                return true;
+            } else {
+                Log::error("Failed to send WhatsApp text message", [
+                    'phone' => $recipientPhone,
+                    'response' => $response->body(),
+                    'status' => $response->status()
+                ]);
+                return false;
+            }
+
+        } catch (\Exception $e) {
+            Log::error("Exception sending WhatsApp text message: " . $e->getMessage(), [
+                'phone' => $recipientPhone,
+                'exception' => $e
+            ]);
+            return false;
+        }
+    }
 }

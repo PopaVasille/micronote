@@ -11,6 +11,7 @@ use App\Repositories\Note\Contracts\NoteRepositoryInterface;
 use App\Services\Classification\GeminiClassificationService;
 use App\Services\Classification\HybridMessageClassificationService;
 use App\Services\Classification\MessageClassificationService;
+use App\Services\Messaging\NotificationService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -21,12 +22,14 @@ readonly class IncomingTelegramMessageProcessorService
      * @param  NoteRepositoryInterface  $noteRepository
      * @param  HybridMessageClassificationService  $classificationService
      * @param  GeminiClassificationService  $geminiService
+     * @param  NotificationService  $notificationService
      */
     public function __construct(
         public IncomingMessageRepositoryInterface $incomingMessageRepository,
         public NoteRepositoryInterface $noteRepository,
         public HybridMessageClassificationService $classificationService,
-        public GeminiClassificationService $geminiService
+        public GeminiClassificationService $geminiService,
+        public NotificationService $notificationService
     ){}
 
     /**
@@ -141,6 +144,9 @@ readonly class IncomingTelegramMessageProcessorService
                 Log::channel('trace')->info('Reminder created successfully.', $logContext);
             }
 
+            // Send note creation confirmation
+            $this->sendNoteCreationConfirmation($senderIdentifier, $note, $correlationId);
+
             $user->increment('notes_count');
 
             return $incomingMessage->id;
@@ -148,6 +154,33 @@ readonly class IncomingTelegramMessageProcessorService
         } catch (\Exception $e) {
             Log::channel('trace')->error('Error processing Telegram message in Service.', array_merge($logContext, ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]));
             return null;
+        }
+    }
+
+    /**
+     * Send note creation confirmation to user
+     *
+     * @param string $senderIdentifier
+     * @param Note $note
+     * @param string $correlationId
+     * @return void
+     */
+    private function sendNoteCreationConfirmation(string $senderIdentifier, Note $note, string $correlationId): void
+    {
+        try {
+            $this->notificationService->sendNoteCreationConfirmation(
+                'telegram',
+                $senderIdentifier,
+                $note,
+                $correlationId
+            );
+        } catch (\Exception $e) {
+            Log::channel('trace')->warning('IncomingTelegramMessageProcessor: Failed to send confirmation', [
+                'correlation_id' => $correlationId,
+                'sender_identifier' => $senderIdentifier,
+                'note_id' => $note->id,
+                'error' => $e->getMessage()
+            ]);
         }
     }
 

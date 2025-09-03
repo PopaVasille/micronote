@@ -48,4 +48,43 @@ class TelegramReminderService
             return false;
         }
     }
+
+    /**
+     * Send simple message via Telegram
+     *
+     * @param string $chatId
+     * @param string $message
+     * @return bool
+     */
+    public function sendMessage(string $chatId, string $message): bool
+    {
+        try {
+            $this->telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => $message,
+            ]);
+
+            Log::info("Telegram message sent successfully", [
+                'chat_id' => $chatId,
+                'message_length' => strlen($message)
+            ]);
+
+            return true;
+
+        } catch (TelegramSDKException $e) {
+            Log::error("Telegram SDK error sending message", [
+                'chat_id' => $chatId,
+                'error' => $e->getMessage(),
+                'exception' => $e
+            ]);
+            return false;
+        } catch (\Exception $e) {
+            Log::error("Exception sending Telegram message", [
+                'chat_id' => $chatId,
+                'error' => $e->getMessage(),
+                'exception' => $e
+            ]);
+            return false;
+        }
+    }
 }

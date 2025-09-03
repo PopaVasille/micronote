@@ -10,6 +10,7 @@ use App\Repositories\IncomingMessage\Contracts\IncomingMessageRepositoryInterfac
 use App\Repositories\Note\Contracts\NoteRepositoryInterface;
 use App\Services\Classification\GeminiClassificationService;
 use App\Services\Classification\HybridMessageClassificationService;
+use App\Services\Messaging\NotificationService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -29,12 +30,14 @@ readonly class UnifiedMessageProcessorService
      * @param NoteRepositoryInterface $noteRepository
      * @param HybridMessageClassificationService $classificationService
      * @param GeminiClassificationService $geminiService
+     * @param NotificationService $notificationService
      */
     public function __construct(
         public IncomingMessageRepositoryInterface $incomingMessageRepository,
         public NoteRepositoryInterface $noteRepository,
         public HybridMessageClassificationService $classificationService,
-        public GeminiClassificationService $geminiService
+        public GeminiClassificationService $geminiService,
+        public NotificationService $notificationService
     ) {}
 
     /**
@@ -139,6 +142,9 @@ readonly class UnifiedMessageProcessorService
             if ($noteType === Note::TYPE_REMINDER && $reminderDetails) {
                 $this->createReminder($note->id, $reminderDetails, $channelType, $logContext);
             }
+
+            // Send note creation confirmation
+            $this->sendNoteCreationConfirmation($channelType, $identifier, $note, $correlationId);
 
             // Update user statistics
             $user->increment('notes_count');
@@ -399,6 +405,40 @@ readonly class UnifiedMessageProcessorService
         } catch (\Exception $e) {
             Log::channel('trace')->error('UnifiedMessageProcessor: Failed to create reminder', [
                 ...$logContext,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Send note creation confirmation to user
+     *
+     * @param string $channelType
+     * @param string $identifier
+     * @param Note $note
+     * @param string $correlationId
+     * @return void
+     */
+    private function sendNoteCreationConfirmation(
+        string $channelType,
+        string $identifier,
+        Note $note,
+        string $correlationId
+    ): void {
+        try {
+            $this->notificationService->sendNoteCreationConfirmation(
+                $channelType,
+                $identifier,
+                $note,
+                $correlationId
+            );
+        } catch (\Exception $e) {
+            // Log error but don't fail the entire process
+            Log::channel('trace')->warning('UnifiedMessageProcessor: Failed to send confirmation', [
+                'correlation_id' => $correlationId,
+                'channel' => $channelType,
+                'identifier' => $identifier,
+                'note_id' => $note->id,
                 'error' => $e->getMessage()
             ]);
         }
