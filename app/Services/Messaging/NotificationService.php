@@ -19,6 +19,55 @@ class NotificationService
     ) {}
 
     /**
+     * Send custom message to user via preferred channel
+     *
+     * @param string $channelType The messaging channel ('telegram' or 'whatsapp')
+     * @param string $identifier The user identifier (telegram_id or wa_id)
+     * @param string $message Custom message to send
+     * @param string $correlationId Tracking ID for logging
+     * @return bool Success status
+     */
+    public function sendCustomMessage(
+        string $channelType,
+        string $identifier,
+        string $message,
+        string $correlationId
+    ): bool {
+        $logContext = [
+            'correlation_id' => $correlationId,
+            'channel' => $channelType,
+            'identifier' => $identifier,
+            'message_type' => 'custom'
+        ];
+
+        Log::channel('trace')->info('NotificationService: Sending custom message', $logContext);
+
+        try {
+            $success = match ($channelType) {
+                'telegram' => $this->sendTelegramConfirmation($identifier, $message, $logContext),
+                'whatsapp' => $this->sendWhatsAppConfirmation($identifier, $message, $logContext),
+                default => false
+            };
+
+            if ($success) {
+                Log::channel('trace')->info('NotificationService: Custom message sent successfully', $logContext);
+            } else {
+                Log::channel('trace')->warning('NotificationService: Failed to send custom message', $logContext);
+            }
+
+            return $success;
+
+        } catch (\Exception $e) {
+            Log::channel('trace')->error('NotificationService: Exception sending custom message', [
+                ...$logContext,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return false;
+        }
+    }
+
+    /**
      * Send note creation confirmation to user
      *
      * @param string $channelType The messaging channel ('telegram' or 'whatsapp')

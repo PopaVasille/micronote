@@ -58,6 +58,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    
+    // Daily Summary Settings
+    Route::patch('/profile/daily-summary', [ProfileController::class, 'updateDailySummary'])
+        ->name('profile.daily-summary.update');
+    Route::post('/profile/daily-summary/test', [ProfileController::class, 'testDailySummary'])
+        ->name('profile.daily-summary.test');
 });
 
 Route::get('/terms-and-conditions', function () {

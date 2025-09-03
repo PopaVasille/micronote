@@ -86,4 +86,12 @@ class Note extends Model
     {
         return $this->hasMany(Note::class, 'parent_id');
     }
+
+    /**
+     * @return HasMany
+     */
+    public function reminders(): HasMany
+    {
+        return $this->hasMany(Reminder::class);
+    }
 }

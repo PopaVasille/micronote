@@ -32,7 +32,10 @@ class User extends Authenticatable
         'uuid',
         'plan',
         'monthly_notes_limit',
-        'notes_count'
+        'notes_count',
+        'daily_summary_enabled',
+        'daily_summary_time',
+        'daily_summary_timezone'
     ];
 
     /**
@@ -55,6 +58,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'daily_summary_enabled' => 'boolean',
         ];
     }
 

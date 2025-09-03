@@ -5,6 +5,7 @@ import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue';
 import UpdateLanguagePreferenceForm from './Partials/UpdateLanguagePreferenceForm.vue';
 import MessagingPlatformsForm from './Partials/MessagingPlatformsForm.vue';
+import DailySummarySettingsForm from './Partials/DailySummarySettingsForm.vue';
 import { Head } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 
@@ -16,6 +17,10 @@ defineProps({
     },
     status: {
         type: String,
+    },
+    user: {
+        type: Object,
+        required: true,
     },
 });
 </script>
@@ -69,6 +74,12 @@ defineProps({
                                 </svg>
                                 {{ t('profile.messaging_platforms') }}
                             </a>
+                            <a href="#daily-summary" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                {{ t('profile.daily_summary.nav_title', 'Rezumat Zilnic') }}
+                            </a>
                             <a href="#language" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
@@ -104,6 +115,11 @@ defineProps({
                     <!-- Messaging Platforms -->
                     <div id="messaging-platforms" class="bg-white rounded-lg border border-gray-200 p-6">
                         <MessagingPlatformsForm />
+                    </div>
+
+                    <!-- Daily Summary Settings -->
+                    <div id="daily-summary" class="bg-white rounded-lg border border-gray-200 p-6">
+                        <DailySummarySettingsForm :user="user" />
                     </div>
 
                     <!-- Language Preferences -->
