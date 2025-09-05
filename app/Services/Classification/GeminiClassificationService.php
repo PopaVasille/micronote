@@ -79,11 +79,11 @@ class GeminiClassificationService
                 Ești un asistent expert în clasificare de text. Sarcina ta este să analizezezi mesajul utilizatorului și să îl clasifici în cea mai potrivită categorie din lista de mai jos.
 
             # CATEGORII DISPONIBILE:
-            - task: O acțiune sau o sarcină specifică ce trebuie executată. Ceva ce trebuie "făcut".
-            - idea: Un concept, un gând, o sugestie creativă sau o notă generală.
-            - reminder: O notificare pentru a-ți aminti de ceva, adesea legată de un moment în timp.
+            - task: O acțiune sau o sarcină generală, fără un timp anume. Ceva ce trebuie "făcut". Ex: "repară gardul".
+            - reminder: O acțiune personală pe care TU trebuie să o faci la un moment specific. O "alarmă" pentru o acțiune. Dacă mesajul conține o acțiune ȘI un timp, este aproape întotdeauna un REMINDER. Ex: "sun-o pe mama la 17:00".
+            - event: O întâmplare programată, care implică o locație sau alte persoane (întâlnire, rezervare, concert). Ceva la care participi. Ex: "întâlnire la birou la 10".
+            - idea: Un concept, un gând sau o sugestie creativă.
             - shopping_list: O listă de produse sau articole de cumpărat.
-            - event: O activitate programată, o întâlnire, o rezervare, cu dată, oră sau locație.
             - contact: Informații despre o persoană (nume, telefon, email).
             - recipe: Instrucțiuni de gătit, ingrediente pentru o rețetă.
             - bookmark: Un link web (URL) care trebuie salvat.
@@ -91,11 +91,13 @@ class GeminiClassificationService
             - simple: Orice mesaj care nu se încadrează clar în categoriile de mai sus.
 
             # EXEMPLE DE CLASIFICARE CORECTĂ:
-            - Mesaj: "Trimite raportul lunar pana vineri." -> Răspuns: task
+            - Mesaj: "trebuie sa termin raportul pana la finalul saptamanii" -> Răspuns: task
+            - Mesaj: "Comandă beton mâine la ora 19" -> Răspuns: reminder
             - Mesaj: "Nu uita sa o suni pe mama maine la 12." -> Răspuns: reminder
             - Mesaj: "cumparaturi: lapte, paine, oua de la lidl" -> Răspuns: shopping_list
             - Mesaj: "ar fi misto sa facem un podcast despre istorie" -> Răspuns: idea
             - Mesaj: "Rezervare la Trattoria vineri la 19:30 pentru 4 persoane" -> Răspuns: event
+            - Mesaj: "sedinta la birou maine la ora 11" -> Răspuns: event
 
             # MESAJ DE ANALIZAT:
             "$messageContent"
@@ -309,7 +311,7 @@ class GeminiClassificationService
                 $this->incrementRateLimiters();
                 $result = $response->json();
                 $jsonText = $result['candidates'][0]['content']['parts'][0]['text'] ?? null;
-
+Log::info('in extractia de informatii'.json_encode($jsonText));
                 if ($jsonText) {
                     $decoded = json_decode($jsonText, true);
                     if (json_last_error() === JSON_ERROR_NONE && isset($decoded['message']) && isset($decoded['remind_at'])) {
@@ -443,6 +445,7 @@ class GeminiClassificationService
                 if ($title) {
                     $cleanTitle = trim($title, '"\'');
                     $cleanTitle = Str::limit($cleanTitle, 50);
+                    $cleanTitle = trim($cleanTitle);
                     Log::info('Successfully generated AI title.', ['original' => $messageContent, 'title' => $cleanTitle]);
                     return $cleanTitle;
                 }

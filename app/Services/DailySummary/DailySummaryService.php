@@ -58,39 +58,44 @@ class DailySummaryService
         $startOfDay = $date->copy()->startOfDay();
         $endOfDay = $date->copy()->endOfDay();
 
-        // Get tasks, events and reminders for today
-        return $user->notes()
+        // Get today's events and reminders
+        $todaysEventsAndReminders = $user->notes()
             ->whereNull('deleted_at')
             ->where(function ($query) use ($startOfDay, $endOfDay) {
-                $query
-                    // Tasks with due date today (stored in metadata.due_date)
-                    ->where(function ($q) use ($startOfDay, $endOfDay) {
-                        $q->where('note_type', Note::TYPE_TASK)
-                          ->where('is_completed', false)
-                          ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.due_date')) >= ?", [$startOfDay->format('Y-m-d')])
-                          ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.due_date')) <= ?", [$endOfDay->format('Y-m-d')]);
-                    })
-                    // Events scheduled for today (stored in metadata.event_date)
-                    ->orWhere(function ($q) use ($startOfDay, $endOfDay) {
-                        $q->where('note_type', Note::TYPE_EVENT)
-                          ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.event_date')) >= ?", [$startOfDay->format('Y-m-d')])
-                          ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.event_date')) <= ?", [$endOfDay->format('Y-m-d')]);
-                    })
-                    // Reminders for today (via reminders table)
-                    ->orWhere(function ($q) use ($startOfDay, $endOfDay) {
-                        $q->where('note_type', Note::TYPE_REMINDER)
-                          ->whereIn('id', function ($subQuery) use ($startOfDay, $endOfDay) {
-                              $subQuery->select('note_id')
-                                       ->from('reminders')
-                                       ->where('next_remind_at', '>=', $startOfDay)
-                                       ->where('next_remind_at', '<=', $endOfDay)
-                                       ->where('is_sent', false);
-                          });
-                    });
+                // Events scheduled for today
+                $query->where(function ($q) use ($startOfDay, $endOfDay) {
+                    $q->where('note_type', Note::TYPE_EVENT)
+                      ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.event_date')) >= ?", [$startOfDay->format('Y-m-d')])
+                      ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.event_date')) <= ?", [$endOfDay->format('Y-m-d')]);
+                })
+                // Reminders for today
+                ->orWhere(function ($q) use ($startOfDay, $endOfDay) {
+                    $q->where('note_type', Note::TYPE_REMINDER)
+                      ->whereIn('id', function ($subQuery) use ($startOfDay, $endOfDay) {
+                          $subQuery->select('note_id')
+                                   ->from('reminders')
+                                   ->where('next_remind_at', '>=', $startOfDay)
+                                   ->where('next_remind_at', '<=', $endOfDay)
+                                   ->where('is_sent', false);
+                      });
+                });
             })
-            ->orderBy('priority', 'desc')
-            ->orderBy('created_at', 'asc')
             ->get();
+
+        // Get all unfinished tasks
+        $unfinishedTasks = $user->notes()
+            ->whereNull('deleted_at')
+            ->where('note_type', Note::TYPE_TASK)
+            ->where('is_completed', false)
+            ->get();
+
+        // Merge the collections and return a unique, sorted list
+        return $todaysEventsAndReminders->merge($unfinishedTasks)
+            ->unique('id')
+            ->sortBy([
+                ['priority', 'desc'],
+                ['created_at', 'asc'],
+            ]);
     }
 
     /**
