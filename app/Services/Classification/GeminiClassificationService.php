@@ -508,6 +508,195 @@ Log::info('in extractia de informatii'.json_encode($jsonText));
     }
 
     /**
+     * Extracts multiple actions of different types from a single message (Premium feature)
+     *
+     * @param string $messageContent
+     * @return array|null The structured actions array or null on failure
+     */
+    public function extractMultipleActions(string $messageContent): ?array
+    {
+        if (!$this->isAvailable()) {
+            return null;
+        }
+
+        // Check rate limits before making API call
+        if (!$this->isWithinRateLimits()) {
+            Log::info('Gemini API rate limit exceeded - skipping multi-action extraction');
+            return null;
+        }
+
+        $prompt = $this->buildMultipleActionsPrompt($messageContent);
+
+        try {
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'X-goog-api-key' => $this->apiKey,
+            ])->post($this->baseUrl, [
+                'contents' => [['parts' => [['text' => $prompt]]]],
+                'generationConfig' => [
+                    'response_mime_type' => 'application/json',
+                ]
+            ]);
+
+            if ($response->successful()) {
+                // Increment rate limiters only after successful call
+                $this->incrementRateLimiters();
+                $result = $response->json();
+                $jsonText = $result['candidates'][0]['content']['parts'][0]['text'] ?? null;
+
+                if ($jsonText) {
+                    $decoded = json_decode($jsonText, true);
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                        Log::info('Successfully extracted multiple actions via AI.', $decoded);
+                        return $decoded;
+                    }
+                }
+            } else {
+                Log::error('Gemini API error for multi-action extraction: ' . $response->body());
+            }
+        } catch (\Exception $e) {
+            Log::error('Gemini multi-action extraction failed: ' . $e->getMessage());
+        }
+
+        return null;
+    }
+
+    /**
+     * Builds the prompt for multiple actions extraction (Premium feature)
+     *
+     * @param string $messageContent
+     * @return string
+     */
+    private function buildMultipleActionsPrompt(string $messageContent): string
+    {
+        $now = now()->toDateTimeString();
+        $currentDate = now()->format('Y-m-d');
+        $tomorrow = now()->addDay()->toDateString();
+
+        return <<<PROMPT
+        Ești un asistent expert în procesarea limbajului natural. Sarcina ta este să analizezi un text și să extragi TOATE acțiunile de TOATE tipurile într-un format JSON structurat.
+
+        # TIPURI DE ACȚIUNI DISPONIBILE:
+        - reminders: Acțiuni personale cu timp specific (alarmă pentru o acțiune)
+        - tasks: Sarcini generale fără timp anume (ceva ce trebuie "făcut")
+        - shopping_list: Liste de produse sau articole de cumpărat
+        - ideas: Concepte, gânduri sau sugestii creative
+        - events: Întâmplări programate cu locație sau alte persoane
+        - contacts: Informații despre persoane (nume, telefon, email)
+        - recipes: Instrucțiuni de gătit, ingrediente
+        - bookmarks: Link-uri web (URL-uri)
+        - measurements: Valori numerice cu unități de măsură
+        - simple: Alte notițe care nu se încadrează în categoriile de mai sus
+
+        # INFORMAȚII DE CONTEXT:
+        - Data și ora curentă: "$now"
+        - Pentru reminder-uri, calculează timpul corect bazat pe contextul temporal
+
+        # FORMAT JSON AȘTEPTAT:
+        Returnează un obiect JSON cu cheile corespunzătoare tipurilor de acțiuni găsite. Fiecare cheie va conține un array cu obiectele respective.
+
+        ## Pentru "reminders":
+        [
+            {
+                "message": "textul curat al reminder-ului",
+                "remind_at": "YYYY-MM-DD HH:MM:SS",
+                "recurrence_rule": "DAILY|WEEKLY|MONTHLY|YEARLY (opțional)",
+                "recurrence_ends_at": "YYYY-MM-DD HH:MM:SS (opțional)"
+            }
+        ]
+
+        ## Pentru "tasks":
+        [
+            {
+                "title": "titlul task-ului"
+            }
+        ]
+
+        ## Pentru "shopping_list":
+        {
+            "title": "titlul listei",
+            "items": [
+                { "text": "item1", "completed": false },
+                { "text": "item2", "completed": false }
+            ]
+        }
+
+        ## Pentru "ideas":
+        [
+            {
+                "title": "titlul ideii",
+                "content": "descrierea ideii"
+            }
+        ]
+
+        ## Pentru "events":
+        [
+            {
+                "title": "numele evenimentului",
+                "date": "YYYY-MM-DD HH:MM:SS",
+                "location": "locația (opțional)"
+            }
+        ]
+
+        ## Pentru "contacts":
+        [
+            {
+                "name": "numele persoanei",
+                "phone": "telefonul (opțional)",
+                "email": "email-ul (opțional)"
+            }
+        ]
+
+        ## Pentru "simple":
+        [
+            {
+                "content": "conținutul notei"
+            }
+        ]
+
+        # EXEMPLE:
+
+        Mesaj: "nu uita sa o suni pe mama maine la 12, trebuie sa cumpar lapte si oua, am o idee pentru aplicatia mobila"
+        Răspuns JSON:
+        {
+            "reminders": [
+                {
+                    "message": "să o suni pe mama",
+                    "remind_at": "$tomorrow 12:00:00"
+                }
+            ],
+            "shopping_list": {
+                "title": "Lista de cumpărături",
+                "items": [
+                    { "text": "lapte", "completed": false },
+                    { "text": "oua", "completed": false }
+                ]
+            },
+            "ideas": [
+                {
+                    "title": "Idee pentru aplicația mobilă",
+                    "content": "idee pentru aplicatia mobila"
+                }
+            ]
+        }
+
+        # REGULI IMPORTANTE:
+        1. Analizează întregul text și identifică TOATE acțiunile posibile
+        2. Separă clar fiecare tip de acțiune în secțiunea sa corespunzătoare
+        3. Pentru reminder-uri, calculează corect timpul bazat pe contextul temporal
+        4. Pentru shopping lists, extrage fiecare item separat
+        5. Nu include chei goale - dacă nu găsești un anumit tip, nu-l include în JSON
+        6. Asigură-te că JSON-ul este valid și complet
+
+        # TEXT DE ANALIZAT:
+        "$messageContent"
+
+        # RĂSPUNS AȘTEPTAT:
+        Returnează DOAR formatul JSON, fără nicio altă explicație:
+        PROMPT;
+    }
+
+    /**
      * Verifică dacă serviciul Gemini e disponibil
      *
      * @return bool

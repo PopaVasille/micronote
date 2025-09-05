@@ -83,4 +83,14 @@ class User extends Authenticatable
         return $this->hasMany(IncomingMessage::class);
     }
 
+    /**
+     * Check if user has a premium plan
+     *
+     * @return bool
+     */
+    public function isPremium(): bool
+    {
+        return $this->plan === 'plus';
+    }
+
 }
