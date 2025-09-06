@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
 
 /**
  * UnifiedMessageProcessorService handles message processing for all channels
- * 
+ *
  * This service provides a unified interface for processing messages from
  * different messaging channels (Telegram, WhatsApp) with the same logic
  * for AI classification, note creation, and reminder setup.
@@ -42,7 +42,7 @@ readonly class UnifiedMessageProcessorService
 
     /**
      * Process an incoming message from any channel
-     * 
+     *
      * This method replicates the exact logic from IncomingTelegramMessageProcessorService
      * but works for any channel type.
      *
@@ -71,7 +71,7 @@ readonly class UnifiedMessageProcessorService
         try {
             // Find user by channel-specific identifier
             $user = $this->findUserByChannel($channelType, $identifier);
-            
+
             if (!$user) {
                 Log::channel('trace')->warning('UnifiedMessageProcessor: User not found', $logContext);
                 return null;
@@ -130,13 +130,13 @@ readonly class UnifiedMessageProcessorService
                     ...$logContext,
                     'ai_response' => $actions
                 ]);
-                
+
                 // Fallback la fluxul Free cu mesaj explicativ
                 $incomingMessage = $this->processFreeMessage($user, $messageContent, $rawData, $channelType, $identifier, $correlationId, $logContext);
-                
+
                 // Mesaj suplimentar de explicare
                 $this->sendFallbackMessage($channelType, $identifier, $correlationId);
-                
+
                 return $incomingMessage;
             }
 
@@ -162,7 +162,7 @@ readonly class UnifiedMessageProcessorService
             foreach ($actions as $actionType => $actionData) {
                 $notes = $this->createNotesForActionType($user->id, $incomingMessage->id, $actionType, $actionData, $rawData, $channelType, $logContext);
                 $createdNotes = array_merge($createdNotes, $notes);
-                
+
                 // Count reminders created
                 if ($actionType === 'reminders') {
                     $createdReminders += count($notes);
@@ -230,7 +230,7 @@ readonly class UnifiedMessageProcessorService
             $metadata = null;
             $reminderDetails = null;
             $noteContent = $messageContent;
-            
+
             if ($noteType === Note::TYPE_SHOPING_LIST) {
                 $metadata = $this->extractShoppingListMetadata($messageContent, $logContext);
             } elseif ($noteType === Note::TYPE_REMINDER && $canUseAI) {
@@ -351,7 +351,7 @@ readonly class UnifiedMessageProcessorService
                             $rawData,
                             $logContext
                         );
-                        
+
                         if ($note) {
                             $this->createReminder($note->id, $reminderData, $channelType, $logContext);
                             $createdNotes[] = $note;
@@ -371,7 +371,7 @@ readonly class UnifiedMessageProcessorService
                             $rawData,
                             $logContext
                         );
-                        
+
                         if ($note) {
                             $createdNotes[] = $note;
                         }
@@ -389,7 +389,7 @@ readonly class UnifiedMessageProcessorService
                         $rawData,
                         $logContext
                     );
-                    
+
                     if ($note) {
                         $createdNotes[] = $note;
                     }
@@ -407,7 +407,7 @@ readonly class UnifiedMessageProcessorService
                             $rawData,
                             $logContext
                         );
-                        
+
                         if ($note) {
                             $createdNotes[] = $note;
                         }
@@ -429,7 +429,7 @@ readonly class UnifiedMessageProcessorService
                             $rawData,
                             $logContext
                         );
-                        
+
                         if ($note) {
                             $createdNotes[] = $note;
                         }
@@ -451,7 +451,7 @@ readonly class UnifiedMessageProcessorService
                             $rawData,
                             $logContext
                         );
-                        
+
                         if ($note) {
                             $createdNotes[] = $note;
                         }
@@ -470,7 +470,7 @@ readonly class UnifiedMessageProcessorService
                             $rawData,
                             $logContext
                         );
-                        
+
                         if ($note) {
                             $createdNotes[] = $note;
                         }
@@ -534,7 +534,7 @@ readonly class UnifiedMessageProcessorService
                     Note::TYPE_CONTACT => $count === 1 ? 'contact' : 'contacte',
                     default => $count === 1 ? 'notiță' : 'notițe'
                 };
-                
+
                 $summaryParts[] = "$count $typeLabel";
             }
 
@@ -605,9 +605,9 @@ readonly class UnifiedMessageProcessorService
     private function extractShoppingListMetadata(string $messageContent, array $logContext): ?array
     {
         Log::channel('trace')->info('UnifiedMessageProcessor: Extracting shopping list items', $logContext);
-        
+
         $items = $this->geminiService->extractShoppingListItems($messageContent);
-        
+
         if ($items !== null) {
             $metadata = ['items' => $items];
             Log::channel('trace')->info('UnifiedMessageProcessor: Shopping list items extracted', [
@@ -616,7 +616,7 @@ readonly class UnifiedMessageProcessorService
             ]);
             return $metadata;
         }
-        
+
         return null;
     }
 
@@ -630,9 +630,9 @@ readonly class UnifiedMessageProcessorService
     private function extractReminderMetadata(string $messageContent, array $logContext): ?array
     {
         Log::channel('trace')->info('UnifiedMessageProcessor: Extracting reminder details', $logContext);
-        
+
         $reminderDetails = $this->geminiService->extractReminderDetails($messageContent);
-        
+
         if ($reminderDetails) {
             Log::channel('trace')->info('UnifiedMessageProcessor: Reminder details extracted', [
                 ...$logContext,
@@ -640,7 +640,7 @@ readonly class UnifiedMessageProcessorService
             ]);
             return $reminderDetails;
         }
-        
+
         return null;
     }
 
@@ -671,7 +671,7 @@ readonly class UnifiedMessageProcessorService
                 'whatsapp' => IncomingMessage::SOURCE_TYPE_WHATSAPP,
                 default => $channelType
             };
-            
+
             $incomingMessage = $this->incomingMessageRepository->create([
                 'user_id' => $userId,
                 'source_type' => $sourceType,
@@ -715,7 +715,7 @@ readonly class UnifiedMessageProcessorService
         array $logContext
     ): string {
         $noteTitle = null;
-        
+
         if ($canUseAI) {
             Log::channel('trace')->info('UnifiedMessageProcessor: Generating note title with AI', $logContext);
             $noteTitle = $this->geminiService->generateNoteTitle($messageContent, $noteType);
@@ -760,7 +760,7 @@ readonly class UnifiedMessageProcessorService
         try {
             // Extract message date based on channel
             $messageDate = $this->extractMessageDate($rawData);
-            
+
             $note = $this->noteRepository->create([
                 'user_id' => $userId,
                 'incoming_message_id' => $incomingMessageId,

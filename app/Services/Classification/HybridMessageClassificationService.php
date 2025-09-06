@@ -27,12 +27,7 @@ class HybridMessageClassificationService
      */
     public function classifyMessage(string $messageContent, bool $useAI = false): string
     {
-        // Strategia 1: Verifică dacă mesajul e foarte simplu și poate fi clasificat rapid cu regex
-//        $quickClassification = $this->tryQuickRegexClassification($messageContent);
-//        if ($quickClassification !== Note::TYPE_SIMPLE) {
-//            Log::info('Quick regex classification succeeded: ' . $quickClassification);
-//            return $quickClassification;
-//        }
+
 Log::info('INTRU PRIN HYBRID');
         // Strategia 2: Dacă userul are dreptul la AI și serviciul e disponibil, folosește Gemini
         if ($useAI && $this->geminiService->isAvailable()) {

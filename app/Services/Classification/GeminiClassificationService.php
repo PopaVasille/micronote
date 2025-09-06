@@ -576,125 +576,106 @@ Log::info('in extractia de informatii'.json_encode($jsonText));
         return <<<PROMPT
         Ești un asistent expert în procesarea limbajului natural. Sarcina ta este să analizezi un text și să extragi TOATE acțiunile de TOATE tipurile într-un format JSON structurat.
 
-        # TIPURI DE ACȚIUNI DISPONIBILE:
-        - reminders: Acțiuni personale cu timp specific (alarmă pentru o acțiune)
-        - tasks: Sarcini generale fără timp anume (ceva ce trebuie "făcut")
-        - shopping_list: Liste de produse sau articole de cumpărat
-        - ideas: Concepte, gânduri sau sugestii creative
-        - events: Întâmplări programate cu locație sau alte persoane
-        - contacts: Informații despre persoane (nume, telefon, email)
-        - recipes: Instrucțiuni de gătit, ingrediente
-        - bookmarks: Link-uri web (URL-uri)
-        - measurements: Valori numerice cu unități de măsură
-        - simple: Alte notițe care nu se încadrează în categoriile de mai sus
+        # REGULI DE CLASIFICARE (FOARTE IMPORTANT):
+        - REGULA DE AUR: Dacă o acțiune conține o referință temporală (ex: "mâine", "marți", "la ora 10", "peste 3 zile", "anul viitor"), este aproape întotdeauna un REMINDER.
+        - Un TASK este doar o acțiune generală, fără nicio referință temporală. Ex: "curăță garajul", "scrie articolul".
+        - Dacă o acțiune este un REMINDER dar NU are o oră specifică (ex: "mâine", "marți"), setează ora implicită la 07:00:00.
+
+        # TIPURI DE ACȚIUNI ȘI FORMATUL LOR:
+        - reminders: O acțiune personală pe care TU trebuie să o faci la un moment specific. O "alarmă" pentru o acțiune. Dacă mesajul conține o acțiune ȘI un timp, este aproape întotdeauna un REMINDER. Ex: "sun-o pe mama la 17:00".
+          - Format: `[{"message": "textul curat", "remind_at": "YYYY-MM-DD HH:MM:SS"}]`
+        - tasks: O acțiune sau o sarcină generală, fără un timp anume. Ceva ce trebuie "făcut". Ex: "repară gardul".
+          - Format: `[{"title": "Titlul task-ului", "content": "descrierea"}]`
+        - shopping_list: O listă de produse sau articole de cumpărat.
+          - Format: `{"title": "Titlu", "items": [{"text": "item", "completed": false}]}`
+        - ideas: Un concept, un gând sau o sugestie creativă.
+          - Format: `[{"title": "Titlu idee", "content": "Descriere"}]`
+        - events: O întâmplare programată, care implică o locație sau alte persoane (întâlnire, rezervare, concert). Ceva la care participi. Ex: "întâlnire la birou la 10".
+          - Format: `[{"title": "Nume eveniment", "date": "YYYY-MM-DD HH:MM:SS", "location": "Locație"}]`
+        - contacts: Informații despre o persoană (nume, telefon, email).
+          - Format: `[{"name": "Nume", "phone": "telefon", "email": "email"}]`
+        - recipes: Instrucțiuni de gătit.
+          - Format: `[{"title": "Nume rețetă", "ingredients": ["ingredient 1"], "steps": "Pasul 1..."}]`
+        - bookmarks: Un link web (URL).
+          - Format: `[{"url": "https://...", "title": "Titlu opțional"}]`
+        - measurements: O valoare numerică cu o unitate de măsură.
+          - Format: `[{"subject": "Ce se măsoară", "value": 180, "unit": "cm"}]`
+        - simple: Orice mesaj care nu se încadrează clar în categoriile de mai sus.
+          - Format: `[{"content": "Conținutul notei"}]`
 
         # INFORMAȚII DE CONTEXT:
-        - Data și ora curentă: "$now"
-        - Pentru reminder-uri, calculează timpul corect bazat pe contextul temporal
+        - Data și ora curentă este: "$now". Folosește-o pentru a calcula datele relative.
+        - "Mâine" este "$tomorrow".
 
-        # FORMAT JSON AȘTEPTAT:
-        Returnează un obiect JSON cu cheile corespunzătoare tipurilor de acțiuni găsite. Fiecare cheie va conține un array cu obiectele respective.
+        # EXEMPLE DE PROCESARE CORECTĂ:
 
-        ## Pentru "reminders":
-        [
-            {
-                "message": "textul curat al reminder-ului",
-                "remind_at": "YYYY-MM-DD HH:MM:SS",
-                "recurrence_rule": "DAILY|WEEKLY|MONTHLY|YEARLY (opțional)",
-                "recurrence_ends_at": "YYYY-MM-DD HH:MM:SS (opțional)"
-            }
-        ]
-
-        ## Pentru "tasks":
-        [
-            {
-                "title": "titlul task-ului"
-            }
-        ]
-
-        ## Pentru "shopping_list":
-        {
-            "title": "titlul listei",
-            "items": [
-                { "text": "item1", "completed": false },
-                { "text": "item2", "completed": false }
-            ]
-        }
-
-        ## Pentru "ideas":
-        [
-            {
-                "title": "titlul ideii",
-                "content": "descrierea ideii"
-            }
-        ]
-
-        ## Pentru "events":
-        [
-            {
-                "title": "numele evenimentului",
-                "date": "YYYY-MM-DD HH:MM:SS",
-                "location": "locația (opțional)"
-            }
-        ]
-
-        ## Pentru "contacts":
-        [
-            {
-                "name": "numele persoanei",
-                "phone": "telefonul (opțional)",
-                "email": "email-ul (opțional)"
-            }
-        ]
-
-        ## Pentru "simple":
-        [
-            {
-                "content": "conținutul notei"
-            }
-        ]
-
-        # EXEMPLE:
-
-        Mesaj: "nu uita sa o suni pe mama maine la 12, trebuie sa cumpar lapte si oua, am o idee pentru aplicatia mobila"
+        ## Exemplu 1:
+        Mesaj: "trebuie sa dau comanda de aspirator maine si sa cumpar paine si oua"
         Răspuns JSON:
         {
             "reminders": [
                 {
-                    "message": "să o suni pe mama",
-                    "remind_at": "$tomorrow 12:00:00"
+                    "message": "Să dau comanda de aspirator",
+                    "remind_at": "$tomorrow 07:00:00"
                 }
             ],
             "shopping_list": {
                 "title": "Lista de cumpărături",
                 "items": [
-                    { "text": "lapte", "completed": false },
+                    { "text": "paine", "completed": false },
                     { "text": "oua", "completed": false }
                 ]
-            },
-            "ideas": [
+            }
+        }
+
+        ## Exemplu 2:
+        Mesaj: "trebuie sa dau comanda de beton pentru maine pentru iasi si marti pentru bacau"
+        Răspuns JSON:
+        {
+            "reminders": [
                 {
-                    "title": "Idee pentru aplicația mobilă",
-                    "content": "idee pentru aplicatia mobila"
+                    "message": "Să dau comandă de beton pentru Iași",
+                    "remind_at": "$tomorrow 07:00:00"
+                },
+                {
+                    "message": "Să dau comandă de beton pentru Bacău",
+                    "remind_at": "YYYY-MM-DD 07:00:00"
                 }
             ]
         }
 
-        # REGULI IMPORTANTE:
-        1. Analizează întregul text și identifică TOATE acțiunile posibile
-        2. Separă clar fiecare tip de acțiune în secțiunea sa corespunzătoare
-        3. Pentru reminder-uri, calculează corect timpul bazat pe contextul temporal
-        4. Pentru shopping lists, extrage fiecare item separat
-        5. Nu include chei goale - dacă nu găsești un anumit tip, nu-l include în JSON
-        6. Asigură-te că JSON-ul este valid și complet
+        ## Exemplu 3:
+        Mesaj: "termină raportul și nu uita să o suni pe mama la 17:30"
+        Răspuns JSON:
+        {
+            "tasks": [
+                {
+                    "title": "Termină raportul",
+                    "content": "termină raportul"
+                }
+            ],
+            "reminders": [
+                {
+                    "message": "Să o suni pe mama",
+                    "remind_at": "$currentDate 17:30:00"
+                }
+            ]
+        }
+
+        # REGULI SUPLIMENTARE PENTRU JSON:
+        1. Analizează întregul text și identifică TOATE acțiunile posibile.
+        2. Pentru `tasks`, asigură-te că `title` începe întotdeauna cu majusculă.
+        3. Nu include chei goale în JSON. Dacă nu găsești un anumit tip de acțiune, omite complet cheia respectivă.
+        4. Asigură-te că JSON-ul returnat este întotdeauna valid.
 
         # TEXT DE ANALIZAT:
         "$messageContent"
 
         # RĂSPUNS AȘTEPTAT:
-        Returnează DOAR formatul JSON, fără nicio altă explicație:
+        Returnează DOAR formatul JSON valid, fără nicio altă explicație.
         PROMPT;
     }
+
 
     /**
      * Verifică dacă serviciul Gemini e disponibil
