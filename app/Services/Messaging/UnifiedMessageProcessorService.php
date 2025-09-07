@@ -121,33 +121,28 @@ readonly class UnifiedMessageProcessorService
         array $logContext
     ): ?IncomingMessage {
         try {
-            // Extract multiple actions using AI
-            $actions = $this->geminiService->extractMultipleActions($messageContent);
+            // Pas 1: Triajul acțiunilor folosind noul prompt specializat
+            $triagedActions = $this->geminiService->triageMultipleActions($messageContent);
 
-            // Verifică dacă răspunsul este un array valid
-            if (!$this->isValidPremiumResponse($actions)) {
-                Log::warning('Premium AI processing failed - falling back to Free flow', [
+            // Fallback la fluxul gratuit dacă triajul eșuează
+            if (empty($triagedActions)) {
+                Log::warning('Premium AI triage failed - falling back to Free flow', [
                     ...$logContext,
-                    'ai_response' => $actions
+                    'ai_response' => $triagedActions
                 ]);
-
-                // Fallback la fluxul Free cu mesaj explicativ
                 $incomingMessage = $this->processFreeMessage($user, $messageContent, $rawData, $channelType, $identifier, $correlationId, $logContext);
-
-                // Mesaj suplimentar de explicare
                 $this->sendFallbackMessage($channelType, $identifier, $correlationId);
-
                 return $incomingMessage;
             }
 
-            // Save incoming message
+            // Salvarea mesajului original primit
             $incomingMessage = $this->saveIncomingMessage(
                 $user->id,
                 $channelType,
                 $identifier,
                 $messageContent,
                 $rawData,
-                'premium_multi_action', // Special type for Premium messages
+                'premium_hybrid', // Tip nou pentru a reflecta noul flux
                 $logContext
             );
 
@@ -155,31 +150,67 @@ readonly class UnifiedMessageProcessorService
                 return null;
             }
 
-            // Process each action type
             $createdNotes = [];
-            $createdReminders = 0;
+            $canUseAI = true; // Utilizatorii premium pot folosi mereu AI
 
-            foreach ($actions as $actionType => $actionData) {
-                $notes = $this->createNotesForActionType($user->id, $incomingMessage->id, $actionType, $actionData, $rawData, $channelType, $logContext);
-                $createdNotes = array_merge($createdNotes, $notes);
+            // Pas 2: Procesarea fiecărei acțiuni identificate cu serviciul specializat corespunzător
+            foreach ($triagedActions as $action) {
+                $actionType = $action['type'];
+                $actionText = $action['text'];
+                $note = null;
 
-                // Count reminders created
-                if ($actionType === 'reminders') {
-                    $createdReminders += count($notes);
+                switch ($actionType) {
+                    case 'reminder':
+                        $reminderDetails = $this->extractReminderMetadata($actionText, $logContext);
+                        if ($reminderDetails) {
+                            $noteTitle = $this->generateNoteTitle($reminderDetails['message'], Note::TYPE_REMINDER, $canUseAI, $logContext);
+                            $note = $this->createNote($user->id, $incomingMessage->id, $noteTitle, $reminderDetails['message'], Note::TYPE_REMINDER, null, $rawData, $logContext);
+                            if ($note) {
+                                $this->createReminder($note->id, $reminderDetails, $channelType, $logContext);
+                            }
+                        }
+                        break;
+
+                    case 'shopping_list':
+                        $metadata = $this->extractShoppingListMetadata($actionText, $logContext);
+                        $noteTitle = $this->generateNoteTitle($actionText, Note::TYPE_SHOPING_LIST, $canUseAI, $logContext);
+                        $note = $this->createNote($user->id, $incomingMessage->id, $noteTitle, $actionText, Note::TYPE_SHOPING_LIST, $metadata, $rawData, $logContext);
+                        break;
+
+                    case 'task':
+                    case 'idea':
+                    case 'simple':
+                    default: // Tratează tipurile necunoscute ca notițe simple
+                        $noteTypeConstant = match($actionType) {
+                            'task' => Note::TYPE_TASK,
+                            'idea' => Note::TYPE_IDEA,
+                            default => Note::TYPE_SIMPLE,
+                        };
+                        $noteTitle = $this->generateNoteTitle($actionText, $noteTypeConstant, $canUseAI, $logContext);
+                        $note = $this->createNote($user->id, $incomingMessage->id, $noteTitle, $actionText, $noteTypeConstant, null, $rawData, $logContext);
+                        break;
+                }
+
+                if ($note) {
+                    $createdNotes[] = $note;
                 }
             }
 
-            // Send premium confirmation message
+            if (empty($createdNotes)) {
+                 Log::warning('Premium processing finished with no notes created, falling back.', $logContext);
+                 return $this->processFreeMessage($user, $messageContent, $rawData, $channelType, $identifier, $correlationId, $logContext);
+            }
+
+            // Trimite mesajul de confirmare sumar
             $this->sendPremiumConfirmation($channelType, $identifier, $createdNotes, $correlationId);
 
-            // Update user statistics
+            // Actualizează statisticile utilizatorului
             $user->increment('notes_count', count($createdNotes));
 
-            Log::channel('trace')->info('UnifiedMessageProcessor: Premium message processing completed successfully', [
+            Log::channel('trace')->info('UnifiedMessageProcessor: Premium Hybrid message processing completed successfully', [
                 ...$logContext,
                 'incoming_message_id' => $incomingMessage->id,
-                'notes_created' => count($createdNotes),
-                'reminders_created' => $createdReminders
+                'notes_created' => count($createdNotes)
             ]);
 
             return $incomingMessage;
@@ -303,202 +334,7 @@ readonly class UnifiedMessageProcessorService
         }
     }
 
-    /**
-     * Validate if Premium AI response is valid
-     *
-     * @param mixed $actions
-     * @return bool
-     */
-    private function isValidPremiumResponse($actions): bool
-    {
-        return is_array($actions) && !empty($actions);
-    }
-
-    /**
-     * Create notes for a specific action type
-     *
-     * @param int $userId
-     * @param int $incomingMessageId
-     * @param string $actionType
-     * @param mixed $actionData
-     * @param array $rawData
-     * @param string $channelType
-     * @param array $logContext
-     * @return array Array of created notes
-     */
-    private function createNotesForActionType(
-        int $userId,
-        int $incomingMessageId,
-        string $actionType,
-        $actionData,
-        array $rawData,
-        string $channelType,
-        array $logContext
-    ): array {
-        $createdNotes = [];
-
-        try {
-            switch ($actionType) {
-                case 'reminders':
-                    foreach ($actionData as $reminderData) {
-                        $note = $this->createNote(
-                            $userId,
-                            $incomingMessageId,
-                            $reminderData['message'],
-                            $reminderData['message'],
-                            Note::TYPE_REMINDER,
-                            null,
-                            $rawData,
-                            $logContext
-                        );
-
-                        if ($note) {
-                            $this->createReminder($note->id, $reminderData, $channelType, $logContext);
-                            $createdNotes[] = $note;
-                        }
-                    }
-                    break;
-
-                case 'tasks':
-                    foreach ($actionData as $taskData) {
-                        $note = $this->createNote(
-                            $userId,
-                            $incomingMessageId,
-                            $taskData['title'],
-                            $taskData['title'],
-                            Note::TYPE_TASK,
-                            null,
-                            $rawData,
-                            $logContext
-                        );
-
-                        if ($note) {
-                            $createdNotes[] = $note;
-                        }
-                    }
-                    break;
-
-                case 'shopping_list':
-                    $note = $this->createNote(
-                        $userId,
-                        $incomingMessageId,
-                        $actionData['title'] ?? 'Lista de cumpărături',
-                        $actionData['title'] ?? 'Lista de cumpărături',
-                        Note::TYPE_SHOPING_LIST,
-                        ['items' => $actionData['items']],
-                        $rawData,
-                        $logContext
-                    );
-
-                    if ($note) {
-                        $createdNotes[] = $note;
-                    }
-                    break;
-
-                case 'ideas':
-                    foreach ($actionData as $ideaData) {
-                        $note = $this->createNote(
-                            $userId,
-                            $incomingMessageId,
-                            $ideaData['title'],
-                            $ideaData['content'],
-                            Note::TYPE_IDEA,
-                            null,
-                            $rawData,
-                            $logContext
-                        );
-
-                        if ($note) {
-                            $createdNotes[] = $note;
-                        }
-                    }
-                    break;
-
-                case 'events':
-                    foreach ($actionData as $eventData) {
-                        $note = $this->createNote(
-                            $userId,
-                            $incomingMessageId,
-                            $eventData['title'],
-                            $eventData['title'] . (isset($eventData['location']) ? ' - ' . $eventData['location'] : ''),
-                            Note::TYPE_EVENT,
-                            [
-                                'date' => $eventData['date'],
-                                'location' => $eventData['location'] ?? null
-                            ],
-                            $rawData,
-                            $logContext
-                        );
-
-                        if ($note) {
-                            $createdNotes[] = $note;
-                        }
-                    }
-                    break;
-
-                case 'contacts':
-                    foreach ($actionData as $contactData) {
-                        $note = $this->createNote(
-                            $userId,
-                            $incomingMessageId,
-                            $contactData['name'],
-                            $contactData['name'],
-                            Note::TYPE_CONTACT,
-                            [
-                                'phone' => $contactData['phone'] ?? null,
-                                'email' => $contactData['email'] ?? null
-                            ],
-                            $rawData,
-                            $logContext
-                        );
-
-                        if ($note) {
-                            $createdNotes[] = $note;
-                        }
-                    }
-                    break;
-
-                case 'simple':
-                    foreach ($actionData as $simpleData) {
-                        $note = $this->createNote(
-                            $userId,
-                            $incomingMessageId,
-                            Str::limit($simpleData['content'], 20),
-                            $simpleData['content'],
-                            Note::TYPE_SIMPLE,
-                            null,
-                            $rawData,
-                            $logContext
-                        );
-
-                        if ($note) {
-                            $createdNotes[] = $note;
-                        }
-                    }
-                    break;
-
-                default:
-                    Log::channel('trace')->warning('Unknown action type in Premium processing', [
-                        ...$logContext,
-                        'action_type' => $actionType
-                    ]);
-                    break;
-            }
-
-            Log::channel('trace')->info("Created notes for action type: $actionType", [
-                ...$logContext,
-                'notes_created' => count($createdNotes)
-            ]);
-
-        } catch (\Exception $e) {
-            Log::channel('trace')->error("Failed to create notes for action type: $actionType", [
-                ...$logContext,
-                'error' => $e->getMessage()
-            ]);
-        }
-
-        return $createdNotes;
-    }
+    
 
     /**
      * Send premium confirmation message with summary

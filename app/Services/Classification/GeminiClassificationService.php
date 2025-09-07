@@ -337,59 +337,58 @@ Log::info('in extractia de informatii'.json_encode($jsonText));
     private function buildReminderExtractionPrompt(string $messageContent): string
     {
         $now = now()->toDateTimeString();
-        $currentDate =now()->format('Y-m-d');
         $tomorrow = now()->addDay()->toDateString();
-        $nextWeek = now()->addWeek()->toDateString();
-        $currentYear = now()->year;
+        $today = now()->toDateString();
 
         return <<<PROMPT
-        Ești un asistent expert în procesarea limbajului natural. Sarcina ta este să analizezi un text care conține un reminder și să extragi informațiile cheie într-un format JSON.
+        Ești un asistent expert în extragerea de date din text. Sarcina ta este să analizezi un text și să extragi detaliile unui reminder într-un format JSON, făcând o distincție clară între un memento pentru o acțiune și un memento pentru un eveniment.
 
         # INFORMAȚII DE EXTRAS:
-        - message: (string, obligatoriu) Textul curat al reminderului, fără informații de timp.
-        - remind_at: (string, obligatoriu) Data și ora la care trebuie setat reminderul, în format "YYYY-MM-DD HH:MM:SS".
-        - recurrence_rule: (string, opțional) Regula de recurență. Valori posibile: 'DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'.
-        - recurrence_ends_at: (string, opțional) Data la care se termină recurența, în format "YYYY-MM-DD HH:MM:SS".
+        - `message`: (string, obligatoriu) Textul curat al acțiunii/evenimentului, FĂRĂ nicio informație despre timp.
+        - `remind_at`: (string, obligatoriu) Data și ora la care trebuie setat reminderul, în format `YYYY-MM-DD HH:MM:SS`.
 
-        # REGULI IMPORTANTE:
-        1.  **Data și Ora Curente:** Consideră că data și ora curentă sunt: "$now". Toate calculele trebuie să plece de la acest moment.
-        2.  **Interpretare Timp Relativ:**
-            - "mâine la 10" -> "$tomorrow 10:00:00"
-            - "în fiecare zi la 8" -> `recurrence_rule: 'DAILY'`. `remind_at` este prima dată de la ora 8 care urmează.
-            - "în fiecare marți la 19:00" -> `recurrence_rule: 'WEEKLY'`. `remind_at` este data următoarei zile de marți.
-            - "până pe 15 august" -> `recurrence_ends_at` este "$currentYear-08-15 23:59:59".
-        3.  **Textul Reminderului:** Extrage doar acțiunea, fără cuvinte legate de timp. De ex., din "nu uita sa o suni pe mama maine la 12", extrage "sa o suni pe mama".
+        # REGULI CRITICE: MEMENTO DE ACȚIUNE vs. MEMENTO DE EVENIMENT
+        1.  **Data de Referință:** Punctul de plecare pentru orice calcul este momentul curent: `$now`.
+        2.  **Analiza Intenției:**
+            - **Memento de ACȚIUNE:** Dacă textul descrie o sarcină care trebuie făcută **PENTRU** un eveniment viitor (ex: "fă rezervare PENTRU mâine", "cumpără bilete PENTRU sâmbătă"),
+            `remind_at` trebuie setat cât mai curând posibil (de regulă, în ziua curentă, la o oră rezonabilă), NU la data evenimentului.
+            - **Memento de EVENIMENT:** Dacă textul descrie evenimentul în sine (ex: "ședință mâine la 10", "zbor la 19:00"), `remind_at` este data și ora exactă a evenimentului.
+        3.  **Ore Implicite pentru Acțiuni:** Pentru mementourile de ACȚIUNE fără oră specificată, folosește ora `09:00:00` a zilei curente.
 
         # EXEMPLE:
-        - Text: "nu uita sa o suni pe mama maine la 12"
+
+        ## Exemplu 1: Memento de ACȚIUNE
+        - Text: "Nu uita să rezervi masa la restaurant pentru mâine la ora 19"
+        - Gândire: Acțiunea este "a rezerva masa". Trebuie făcută azi, pentru evenimentul de mâine. Mementoul trebuie să sune acum.
         - Răspuns JSON:
         {
-          "message": "sa o suni pe mama",
+          "message": "Să rezervi masa la restaurant pentru mâine la ora 19",
+          "remind_at": "$today 09:00:00"
+        }
+
+        ## Exemplu 2: Memento de EVENIMENT
+        - Text: "nu uita de întâlnirea cu mama maine la 12"
+        - Gândire: Mementoul este pentru evenimentul în sine, nu pentru o acțiune premergătoare.
+        - Răspuns JSON:
+        {
+          "message": "întâlnirea cu mama",
           "remind_at": "$tomorrow 12:00:00"
         }
 
-        - Text: "plimbă câinele în fiecare zi la 8 dimineața"
+        ## Exemplu 3: Memento de ACȚIUNE (fără oră)
+        - Text: "Trebuie să cumpăr flori pentru aniversarea de poimâine"
+        - Gândire: Acțiunea este "a cumpăra flori". Trebuie făcută azi.
         - Răspuns JSON:
         {
-          "message": "plimbă câinele",
-          "remind_at": "{$tomorrow} 08:00:00",
-          "recurrence_rule": "DAILY"
-        }
-
-        - Text: "ia vitamina C zilnic la prânz până pe 15 august"
-        - Răspuns JSON:
-        {
-          "message": "ia vitamina C",
-          "remind_at": "{$currentDate} 12:00:00",
-          "recurrence_rule": "DAILY",
-          "recurrence_ends_at": "{$currentYear}-08-15 23:59:59"
+          "message": "Cumpără flori pentru aniversarea de poimâine",
+          "remind_at": "$today 09:00:00"
         }
 
         # TEXT DE ANALIZAT:
-        "$messageContent"
+        `$messageContent`
 
         # RĂSPUNS AȘTEPTAT:
-        Returnează DOAR formatul JSON, fără nicio altă explicație.
+        Returnează DOAR formatul JSON valid, fără nicio altă explicație.
         PROMPT;
     }
 
@@ -582,18 +581,18 @@ Log::info('in extractia de informatii'.json_encode($jsonText));
         - Dacă o acțiune este un REMINDER dar NU are o oră specifică (ex: "mâine", "marți"), setează ora implicită la 07:00:00.
 
         # TIPURI DE ACȚIUNI ȘI FORMATUL LOR:
-        - reminders: O acțiune personală pe care TU trebuie să o faci la un moment specific. O "alarmă" pentru o acțiune. Dacă mesajul conține o acțiune ȘI un timp, este aproape întotdeauna un REMINDER. Ex: "sun-o pe mama la 17:00".
+        - reminders: O acțiune personală cu timp specific.
           - Format: `[{"message": "textul curat", "remind_at": "YYYY-MM-DD HH:MM:SS"}]`
-        - tasks: O acțiune sau o sarcină generală, fără un timp anume. Ceva ce trebuie "făcut". Ex: "repară gardul".
-          - Format: `[{"title": "Titlul task-ului", "content": "descrierea"}]`
-        - shopping_list: O listă de produse sau articole de cumpărat.
-          - Format: `{"title": "Titlu", "items": [{"text": "item", "completed": false}]}`
-        - ideas: Un concept, un gând sau o sugestie creativă.
-          - Format: `[{"title": "Titlu idee", "content": "Descriere"}]`
-        - events: O întâmplare programată, care implică o locație sau alte persoane (întâlnire, rezervare, concert). Ceva la care participi. Ex: "întâlnire la birou la 10".
-          - Format: `[{"title": "Nume eveniment", "date": "YYYY-MM-DD HH:MM:SS", "location": "Locație"}]`
-        - contacts: Informații despre o persoană (nume, telefon, email).
-          - Format: `[{"name": "Nume", "phone": "telefon", "email": "email"}]`
+        - tasks: O sarcină generală fără timp.
+          - Format: `[{"title": "Titlul task-ului (CU MAJUSCULĂ)", "content": "descrierea"}]`
+        - shopping_list: O listă de cumpărături.
+          - Format: `{"title": "titlu", "items": [{"text": "item", "completed": false}]}`
+        - ideas: Concepte sau gânduri.
+          - Format: `[{"title": "titlu idee", "content": "descriere"}]`
+        - events: Întâmplări programate.
+          - Format: `[{"title": "nume eveniment", "date": "YYYY-MM-DD HH:MM:SS", "location": "locație"}]`
+        - contacts: Informații despre persoane.
+          - Format: `[{"name": "nume", "phone": "telefon", "email": "email"}]`
         - recipes: Instrucțiuni de gătit.
           - Format: `[{"title": "Nume rețetă", "ingredients": ["ingredient 1"], "steps": "Pasul 1..."}]`
         - bookmarks: Un link web (URL).
@@ -601,7 +600,7 @@ Log::info('in extractia de informatii'.json_encode($jsonText));
         - measurements: O valoare numerică cu o unitate de măsură.
           - Format: `[{"subject": "Ce se măsoară", "value": 180, "unit": "cm"}]`
         - simple: Orice mesaj care nu se încadrează clar în categoriile de mai sus.
-          - Format: `[{"content": "Conținutul notei"}]`
+          - Format: `[{"content": "conținutul notei"}]`
 
         # INFORMAȚII DE CONTEXT:
         - Data și ora curentă este: "$now". Folosește-o pentru a calcula datele relative.
@@ -615,7 +614,7 @@ Log::info('in extractia de informatii'.json_encode($jsonText));
         {
             "reminders": [
                 {
-                    "message": "Să dau comanda de aspirator",
+                    "message": "să dau comanda de aspirator",
                     "remind_at": "$tomorrow 07:00:00"
                 }
             ],
@@ -634,11 +633,11 @@ Log::info('in extractia de informatii'.json_encode($jsonText));
         {
             "reminders": [
                 {
-                    "message": "Să dau comandă de beton pentru Iași",
+                    "message": "să dau comandă de beton pentru Iași",
                     "remind_at": "$tomorrow 07:00:00"
                 },
                 {
-                    "message": "Să dau comandă de beton pentru Bacău",
+                    "message": "să dau comandă de beton pentru Bacău",
                     "remind_at": "YYYY-MM-DD 07:00:00"
                 }
             ]
@@ -656,7 +655,7 @@ Log::info('in extractia de informatii'.json_encode($jsonText));
             ],
             "reminders": [
                 {
-                    "message": "Să o suni pe mama",
+                    "message": "să o suni pe mama",
                     "remind_at": "$currentDate 17:30:00"
                 }
             ]
@@ -675,6 +674,126 @@ Log::info('in extractia de informatii'.json_encode($jsonText));
         Returnează DOAR formatul JSON valid, fără nicio altă explicație.
         PROMPT;
     }
+
+    /**
+     * Performs the initial triage of a message to identify all potential actions within it.
+     *
+     * @param string $messageContent
+     * @return array|null The structured array of identified action types and their raw text.
+     */
+    public function triageMultipleActions(string $messageContent): ?array
+    {
+        if (!$this->isAvailable() || !$this->isWithinRateLimits()) {
+            Log::warning('Gemini API not available or rate limit exceeded for multi-action triage.');
+            return null;
+        }
+
+        $prompt = $this->buildTriagePrompt($messageContent);
+
+        try {
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'X-goog-api-key' => $this->apiKey,
+            ])->post($this->baseUrl, [
+                'contents' => [['parts' => [['text' => $prompt]]]],
+                'generationConfig' => ['response_mime_type' => 'application/json'],
+            ]);
+
+            if ($response->successful()) {
+                $this->incrementRateLimiters();
+                $result = $response->json();
+                $jsonText = $result['candidates'][0]['content']['parts'][0]['text'] ?? null;
+
+                if ($jsonText) {
+                    $decoded = json_decode($jsonText, true);
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded) && isset($decoded['actions'])) {
+                        Log::info('Successfully triaged multiple actions via AI.', $decoded);
+                        return $decoded['actions'];
+                    }
+                }
+            } else {
+                Log::error('Gemini API error for multi-action triage: ' . $response->body());
+            }
+        } catch (\Exception $e) {
+            Log::error('Gemini multi-action triage failed: ' . $e->getMessage());
+        }
+
+        return null;
+    }
+
+    /**
+     * Builds the prompt for the multi-action triage step.
+     *
+     * @param string $messageContent
+     * @return string
+     */
+    private function buildTriagePrompt(string $messageContent): string
+    {
+        return <<<PROMPT
+        Ești un asistent expert în analiza textului. Sarcina ta este să identifici și să separi TOATE acțiunile distincte dintr-un mesaj. Nu trebuie să le procesezi, doar să le identifici.
+
+        # TIPURI DE ACȚIUNI DE IDENTIFICAT:
+        - reminder: O acțiune cu o referință temporală (ex: mâine, la ora 5, marți).
+        - task: O sarcină generală fără timp.
+        - shopping_list: O listă de cumpărături.
+        - idea: O idee sau un concept.
+        - event: Un eveniment programat.
+        - contact: Informații de contact.
+        - recipe: O rețetă.
+        - bookmark: Un link/URL.
+        - measurement: O măsurătoare.
+        - simple: Orice altceva.
+
+        # REGULI:
+        1.  Returnează un obiect JSON care conține o singură cheie: "actions".
+        2.  Valoarea pentru "actions" trebuie să fie o listă (array) de obiecte.
+        3.  Fiecare obiect din listă trebuie să aibă două chei: "type" (unul din tipurile de mai sus) și "text" (textul original corespunzător acelei acțiuni).
+        4.  Combină itemii unei liste de cumpărături într-o singură acțiune de tip `shopping_list`.
+        5.  **REGULĂ IMPORTANTĂ:** Dacă o acțiune se repetă cu contexte diferite (ex: locații, date), creează acțiuni separate, dar asigură-te că fiecare acțiune nouă conține și verbul/substantivul principal din acțiunea inițială pentru a păstra contextul complet.
+
+        # EXEMPLE:
+
+        ## Exemplu 1:
+        Mesaj: "trebuie sa dau comanda de aspirator maine si sa cumpar paine si oua"
+        Răspuns JSON:
+        {
+            "actions": [
+                { "type": "reminder", "text": "trebuie sa dau comanda de aspirator maine" },
+                { "type": "shopping_list", "text": "sa cumpar paine si oua" }
+            ]
+        }
+
+        ## Exemplu 2:
+        Mesaj: "termină raportul și nu uita să o suni pe mama la 17:30"
+        Răspuns JSON:
+        {
+            "actions": [
+                { "type": "task", "text": "termină raportul" },
+                { "type": "reminder", "text": "nu uita să o suni pe mama la 17:30" }
+            ]
+        }
+
+        ## Exemplu 3 (Păstrarea Contextului):
+        Mesaj: "trebuie sa dau comanda de manusi maine pentru buzau si miercuri pentru botosani"
+        Răspuns JSON:
+        {
+            "actions": [
+                { "type": "reminder", "text": "trebuie sa dau comanda de manusi maine pentru buzau" },
+                { "type": "reminder", "text": "trebuie sa dau comanda de manusi miercuri pentru botosani" }
+            ]
+        }
+
+        # TEXT DE ANALIZAT:
+        "$messageContent"
+
+        # RĂSPUNS AȘTEPTAT:
+        Returnează DOAR formatul JSON valid, fără nicio altă explicație.
+        PROMPT;
+    }
+
+    /**
+     * Verifică dacă serviciul Gemini e disponibil
+     *
 
 
     /**
