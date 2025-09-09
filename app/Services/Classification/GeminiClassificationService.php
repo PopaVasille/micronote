@@ -341,47 +341,49 @@ Log::info('in extractia de informatii'.json_encode($jsonText));
         $today = now()->toDateString();
 
         return <<<PROMPT
-        Ești un asistent expert în extragerea de date din text. Sarcina ta este să analizezi un text și să extragi detaliile unui reminder într-un format JSON, făcând o distincție clară între un memento pentru o acțiune și un memento pentru un eveniment.
+        Ești un asistent expert în extragerea de date din text. Sarcina ta este să analizezi un text și să extragi detaliile unui reminder într-un format JSON.
 
         # INFORMAȚII DE EXTRAS:
         - `message`: (string, obligatoriu) Textul curat al acțiunii/evenimentului, FĂRĂ nicio informație despre timp.
         - `remind_at`: (string, obligatoriu) Data și ora la care trebuie setat reminderul, în format `YYYY-MM-DD HH:MM:SS`.
 
-        # REGULI CRITICE: MEMENTO DE ACȚIUNE vs. MEMENTO DE EVENIMENT
-        1.  **Data de Referință:** Punctul de plecare pentru orice calcul este momentul curent: `$now`.
-        2.  **Analiza Intenției:**
-            - **Memento de ACȚIUNE:** Dacă textul descrie o sarcină care trebuie făcută **PENTRU** un eveniment viitor (ex: "fă rezervare PENTRU mâine", "cumpără bilete PENTRU sâmbătă"),
-            `remind_at` trebuie setat cât mai curând posibil (de regulă, în ziua curentă, la o oră rezonabilă), NU la data evenimentului.
-            - **Memento de EVENIMENT:** Dacă textul descrie evenimentul în sine (ex: "ședință mâine la 10", "zbor la 19:00"), `remind_at` este data și ora exactă a evenimentului.
-        3.  **Ore Implicite pentru Acțiuni:** Pentru mementourile de ACȚIUNE fără oră specificată, folosește ora `09:00:00` a zilei curente.
+        # REGULI DE INTERPRETARE TEMPORALĂ:
+        1. **Data de Referință:** Punctul de plecare pentru orice calcul este momentul curent: `$now`.
+        2. **Regula de Aur:** Dacă mesajul conține o referință temporală explicită (ex: "mâine la 19", "marți la 10"), această referință determină EXACT când să se declanșeze reminderul.
+        3. **Ore Implicite:** Dacă nu există oră specificată, folosește ora `09:00:00`.
+        4. **Interpretarea temporală:**
+           - "mâine" = `$tomorrow`
+           - "azi" = `$today`
+           - "la ora X" = ora X în ziua specificată
+           - "marți", "miercuri", etc. = următoarea zi specificată
 
         # EXEMPLE:
 
-        ## Exemplu 1: Memento de ACȚIUNE
-        - Text: "Nu uita să rezervi masa la restaurant pentru mâine la ora 19"
-        - Gândire: Acțiunea este "a rezerva masa". Trebuie făcută azi, pentru evenimentul de mâine. Mementoul trebuie să sune acum.
+        ## Exemplu 1: Referință temporală explicită
+        - Text: "trebuie sa duc cainele la veterinar maine la 19"
+        - Gândire: "mâine la 19" înseamnă mâine la ora 19:00
         - Răspuns JSON:
         {
-          "message": "Să rezervi masa la restaurant pentru mâine la ora 19",
-          "remind_at": "$today 09:00:00"
+          "message": "să duc cainele la veterinar",
+          "remind_at": "$tomorrow 19:00:00"
         }
 
-        ## Exemplu 2: Memento de EVENIMENT
-        - Text: "nu uita de întâlnirea cu mama maine la 12"
-        - Gândire: Mementoul este pentru evenimentul în sine, nu pentru o acțiune premergătoare.
+        ## Exemplu 2: Doar ziua specificată
+        - Text: "nu uita de întâlnirea cu mama maine"
+        - Gândire: "mâine" fără oră = mâine la 09:00
         - Răspuns JSON:
         {
           "message": "întâlnirea cu mama",
-          "remind_at": "$tomorrow 12:00:00"
+          "remind_at": "$tomorrow 09:00:00"
         }
 
-        ## Exemplu 3: Memento de ACȚIUNE (fără oră)
-        - Text: "Trebuie să cumpăr flori pentru aniversarea de poimâine"
-        - Gândire: Acțiunea este "a cumpăra flori". Trebuie făcută azi.
+        ## Exemplu 3: Ora în ziua curentă
+        - Text: "sună-o pe mama la 17:30"
+        - Gândire: Ora specificată în ziua curentă
         - Răspuns JSON:
         {
-          "message": "Cumpără flori pentru aniversarea de poimâine",
-          "remind_at": "$today 09:00:00"
+          "message": "să o suni pe mama",
+          "remind_at": "$today 17:30:00"
         }
 
         # TEXT DE ANALIZAT:
