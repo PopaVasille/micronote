@@ -13,7 +13,7 @@ interface NoteRepositoryInterface
      * @param  string|null  $searchQuery
      * @return Collection
      */
-    public function getAllByUserId(int $userId, ?string $searchQuery = null): Collection;
+    public function getAllByUserId(int $userId, ?string $searchQuery = null, string $sortDirection = 'desc'): Collection;
 
     /**
      * @param  int  $userId
@@ -21,21 +21,21 @@ interface NoteRepositoryInterface
      * @param  string|null  $searchQuery
      * @return Collection
      */
-    public function getByUserIdAndType(int $userId, string $noteType, ?string $searchQuery = null): Collection;
+    public function getByUserIdAndType(int $userId, string $noteType, ?string $searchQuery = null, string $sortDirection = 'desc'): Collection;
 
     /**
      * @param  int  $userId
      * @param  string|null  $searchQuery
      * @return Collection
      */
-    public function getFavoriteByUserId(int $userId, ?string $searchQuery = null): Collection;
+    public function getFavoriteByUserId(int $userId, ?string $searchQuery = null, string $sortDirection = 'desc'): Collection;
 
     /**
      * @param  int  $userId
      * @param  string|null  $searchQuery
      * @return Collection
      */
-    public function getCompletedByUserId(int $userId, ?string $searchQuery = null): Collection;
+    public function getCompletedByUserId(int $userId, ?string $searchQuery = null, string $sortDirection = 'desc'): Collection;
 
     /**
      * @param  array  $data

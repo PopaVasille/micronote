@@ -1,17 +1,35 @@
 <script setup>
 import { useI18n } from 'vue-i18n';
+import { computed } from 'vue';
 
 const { t } = useI18n();
 
-defineProps({
+const props = defineProps({
     currentFilter: String,
+    sortDirection: String,
 });
 
-const emit = defineEmits(['filterChanged']);
+const emit = defineEmits(['filterChanged', 'sortChanged']);
 
 const applyFilter = (filter) => {
     emit('filterChanged', filter);
 };
+
+const toggleSort = () => {
+    const newDirection = props.sortDirection === 'desc' ? 'asc' : 'desc';
+    emit('sortChanged', newDirection);
+};
+
+const sortIcon = computed(() => {
+    return props.sortDirection === 'desc'
+        ? 'M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4' // Newest first
+        : 'M3 4h13M3 8h9m-9 4h6m4 8V4m0 0l-4 4m4-4l4 4'; // Oldest first
+});
+
+const sortText = computed(() => {
+    return props.sortDirection === 'desc' ? t('dashboard.newest') : t('dashboard.oldest');
+});
+
 </script>
 
 <template>
@@ -52,14 +70,14 @@ const applyFilter = (filter) => {
             {{ t('common.completed') }}
         </button>
         <div class="ml-auto">
-            <button
+            <button @click="toggleSort"
                 class="flex items-center text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 py-1 px-3 rounded">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none"
                      viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/>
+                          :d="sortIcon"/>
                 </svg>
-                {{ t('dashboard.newest') }}
+                {{ sortText }}
             </button>
         </div>
     </div>

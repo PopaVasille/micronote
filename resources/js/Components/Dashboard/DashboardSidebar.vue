@@ -28,7 +28,7 @@ const notesUsagePercentage = computed(() => {
 </script>
 
 <template>
-    <div :class="[showSidebar ? 'block' : 'hidden', 'w-64 bg-white border-r border-gray-200 h-screen sticky top-0 overflow-y-auto md:block flex flex-col']">
+    <div :class="['fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-200 h-screen overflow-y-auto flex flex-col transform transition-transform duration-300 ease-in-out md:relative', showSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0']">
         <div>
             <div class="p-4 flex items-center justify-between">
                 <div class="flex items-center">

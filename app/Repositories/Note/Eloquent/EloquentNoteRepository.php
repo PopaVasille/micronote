@@ -23,12 +23,12 @@ class EloquentNoteRepository implements NoteRepositoryInterface
      * @param  int  $userId
      * @return Collection
      */
-    public function getAllByUserId(int $userId, ?string $searchQuery = null): Collection
+    public function getAllByUserId(int $userId, ?string $searchQuery = null, string $sortDirection = 'desc'): Collection
     {
         $query = $this->note->where('user_id', $userId)
             ->whereNull('deleted_at')
             ->where('is_completed', false)
-            ->orderBy('created_at', 'desc')
+            ->orderBy('updated_at', $sortDirection)
             ->with('tags');
         if($searchQuery){
             $query->where(function($q) use ($searchQuery) {
@@ -39,13 +39,13 @@ class EloquentNoteRepository implements NoteRepositoryInterface
         return  $query->get();
     }
 
-    public function getFavoriteByUserId(int $userId, ?string $searchQuery = null): Collection
+    public function getFavoriteByUserId(int $userId, ?string $searchQuery = null, string $sortDirection = 'desc'): Collection
     {
         $query = $this->note->where('user_id', $userId)
             ->where('is_favorite', true)
             ->where('is_completed', false)
             ->whereNull('deleted_at')
-            ->orderBy('created_at', 'desc')
+            ->orderBy('updated_at', $sortDirection)
             ->with('tags');
             if($searchQuery){
                 $query->where(function($q) use ($searchQuery) {
@@ -55,12 +55,12 @@ class EloquentNoteRepository implements NoteRepositoryInterface
             }
           return  $query->get();
     }
-    public function getCompletedByUserId(int $userId, ?string $searchQuery = null): Collection
+    public function getCompletedByUserId(int $userId, ?string $searchQuery = null, string $sortDirection = 'desc'): Collection
     {
         $query = $this->note->where('user_id', $userId)
             ->where('is_completed', true)
             ->whereNull('deleted_at')
-            ->orderBy('created_at', 'desc')
+            ->orderBy('updated_at', $sortDirection)
             ->with('tags');
 
         if($searchQuery){
@@ -77,13 +77,13 @@ class EloquentNoteRepository implements NoteRepositoryInterface
      * @param  string  $noteType
      * @return Collection
      */
-    public function getByUserIdAndType(int $userId, string $noteType, ?string $searchQuery = null): Collection
+    public function getByUserIdAndType(int $userId, string $noteType, ?string $searchQuery = null, string $sortDirection = 'desc'): Collection
     {
         $query = $this->note->where('user_id', $userId)
             ->where('note_type', $noteType)
             ->where('is_completed', false)
             ->whereNull('deleted_at')
-            ->orderBy('created_at', 'desc')
+            ->orderBy('updated_at', $sortDirection)
             ->with('tags');
 
         if($searchQuery){

@@ -120,6 +120,7 @@
     "filter_by": "Filtrează după:",
     "all": "Toate",
     "newest": "Cele mai noi",
+    "oldest": "Cele mai vechi",
     "no_notes_placeholder": "Nu există notițe pentru acest filtru.",
     "add_first_note": "Adaugă prima ta notiță",
     "mark_as_completed": "Marchează ca finalizat",
@@ -148,7 +149,10 @@
     "add_another_platform": "Adaugă Altă Platformă",
     "add_another_platform_description": "Poți conecta platforme suplimentare pentru și mai multă flexibilitate.",
     "password_security": "Parolă și Securitate",
-    "danger_zone": "Zonă Periculoasă"
+    "danger_zone": "Zonă Periculoasă",
+    "daily_summary": {
+      "nav_title": "Rezumat Zilnic"
+    }
   },
   "auth": {
     "back_to_home": "Înapoi la pagina principală",

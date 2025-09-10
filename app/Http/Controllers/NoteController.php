@@ -25,12 +25,17 @@ class NoteController extends Controller
         $user = $request->user();
         $filter = $request->query('filter', 'all');
         $searchQuery = $request->query('search');
+        $sortDirection = $request->query('sort', 'desc');
+
+        if (!in_array($sortDirection, ['asc', 'desc'])) {
+            $sortDirection = 'desc';
+        }
 
         $notes = match($filter) {
-            'all' => $this->noteRepository->getAllByUserId($user->id, $searchQuery),
-            'favorite' => $this->noteRepository->getFavoriteByUserId($user->id, $searchQuery),
-            'completed' => $this->noteRepository->getCompletedByUserId($user->id, $searchQuery),
-            default => $this->noteRepository->getByUserIdAndType($user->id, $filter, $searchQuery)
+            'all' => $this->noteRepository->getAllByUserId($user->id, $searchQuery, $sortDirection),
+            'favorite' => $this->noteRepository->getFavoriteByUserId($user->id, $searchQuery, $sortDirection),
+            'completed' => $this->noteRepository->getCompletedByUserId($user->id, $searchQuery, $sortDirection),
+            default => $this->noteRepository->getByUserIdAndType($user->id, $filter, $searchQuery, $sortDirection)
         };
 
         Log::info('$user: '.$user);
@@ -40,6 +45,7 @@ class NoteController extends Controller
             'notes' => $notes,
             'filter' => $filter,
             'search' => $searchQuery,
+            'sort' => $sortDirection,
         ])->withViewData([
             'cache-control' => 'max-age=60, must-revalidate' // Cache pentru 60 secunde, dar trebuie revalidat
         ]);

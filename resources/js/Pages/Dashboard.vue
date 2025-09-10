@@ -21,7 +21,8 @@ const page = usePage();
 const isLoading = ref(true);
 const currentFilter = ref(page.props.filter || 'all');
 const searchQuery = ref(page.props.search || '');
-const showSidebar = ref(true); // For mobile
+const sortDirection = ref(page.props.sort || 'desc');
+const showSidebar = ref(false); // For mobile
 const showCreateModal = ref(false);
 const showNoteModal = ref(false);
 const selectedNote = ref(null);
@@ -32,18 +33,20 @@ const notes = computed(() => page.props.notes || []);
 const user = computed(() => page.props.auth.user);
 
 // Methods
-const fetchNotes = (filter = currentFilter.value, search = searchQuery.value) => {
+const fetchNotes = (filter = currentFilter.value, search = searchQuery.value, sort = sortDirection.value) => {
     isLoading.value = true;
-    console.log('fetchNotes called with filter:', filter, 'search:', search);
+    console.log('fetchNotes called with filter:', filter, 'search:', search, 'sort:', sort);
     router.get(route('dashboard'), {
         filter: filter,
         search: search,
+        sort: sort,
     }, {
         preserveState: true,
         preserveScroll: true,
         replace: true,
         onSuccess: (updatedPage) => {
             currentFilter.value = updatedPage.props.filter || filter;
+            sortDirection.value = updatedPage.props.sort || sort;
         },
         onError: () => {
             console.error(t('errors.loadingNotes'));
@@ -52,6 +55,11 @@ const fetchNotes = (filter = currentFilter.value, search = searchQuery.value) =>
             isLoading.value = false;
         }
     });
+};
+
+const handleSortChange = (direction) => {
+    sortDirection.value = direction;
+    fetchNotes();
 };
 
 let debounceTimeout = null;
@@ -152,6 +160,9 @@ watch(searchQuery, debouncedSearch);
         <OfflineStatusBanner :is-offline="isOffline" :has-pending-changes="hasPendingChanges" />
 
         <div class="flex h-screen bg-gray-50">
+            <!-- Backdrop for mobile -->
+            <div v-if="showSidebar" @click="showSidebar = false" class="fixed inset-0 z-20 bg-black bg-opacity-50 md:hidden"></div>
+            
             <DashboardSidebar
                 :show-sidebar="showSidebar"
                 :current-filter="currentFilter"
@@ -172,7 +183,9 @@ watch(searchQuery, debouncedSearch);
                 <main class="flex-1 p-4 overflow-auto">
                     <FilterToolbar
                         :current-filter="currentFilter"
+                        :sort-direction="sortDirection"
                         @filter-changed="fetchNotes($event)"
+                        @sort-changed="handleSortChange"
                     />
                     <NoteGrid
                         :notes="notes"
@@ -199,4 +212,3 @@ watch(searchQuery, debouncedSearch);
         />
     </AuthenticatedLayout>
 </template>
-

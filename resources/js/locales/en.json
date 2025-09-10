@@ -120,6 +120,7 @@
     "filter_by": "Filter by:",
     "all": "All",
     "newest": "Newest",
+    "oldest": "Oldest",
     "no_notes_placeholder": "There are no notes for this filter.",
     "add_first_note": "Add your first note",
     "mark_as_completed": "Mark as completed",
@@ -148,7 +149,10 @@
     "add_another_platform": "Add Another Platform",
     "add_another_platform_description": "You can connect additional platforms for even more flexibility.",
     "password_security": "Password & Security",
-    "danger_zone": "Danger Zone"
+    "danger_zone": "Danger Zone",
+    "daily_summary": {
+      "nav_title": "Daily Summary"
+    }
   },
   "auth": {
     "back_to_home": "Back to home page",
