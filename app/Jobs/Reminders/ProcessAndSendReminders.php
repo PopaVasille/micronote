@@ -27,7 +27,7 @@ class ProcessAndSendReminders implements ShouldQueue
     ): void {
         $deliveryService = $this->deliveryService ?? $deliveryService;
         $schedulingService = $this->schedulingService ?? $schedulingService;
-        
+
         Log::info('Running ProcessAndSendReminders Job...');
 
         $reminders = Reminder::where('next_remind_at', '<=', now()->addMinute())
@@ -39,6 +39,7 @@ class ProcessAndSendReminders implements ShouldQueue
 
         if ($reminders->isEmpty()) {
             Log::info('No reminders to process.');
+
             return;
         }
 
@@ -46,14 +47,24 @@ class ProcessAndSendReminders implements ShouldQueue
 
         foreach ($reminders as $reminder) {
             try {
+                // Check if reminder is too old (more than 24 hours past due)
+                if ($reminder->next_remind_at->lt(now()->subDay())) {
+                    Log::info("Reminder #{$reminder->id} is more than 24 hours overdue. Marking as expired.");
+                    $schedulingService->rescheduleOrDeleteReminder($reminder);
+
+                    continue;
+                }
+
                 $sent = $deliveryService->deliverReminder($reminder);
 
                 if ($sent) {
                     $schedulingService->rescheduleOrDeleteReminder($reminder);
+                } else {
+                    Log::warning("Failed to deliver reminder #{$reminder->id}. Will retry on next job run.");
                 }
 
             } catch (\Exception $e) {
-                Log::error("Failed to process reminder #{$reminder->id}: " . $e->getMessage());
+                Log::error("Failed to process reminder #{$reminder->id}: ".$e->getMessage());
             }
         }
     }

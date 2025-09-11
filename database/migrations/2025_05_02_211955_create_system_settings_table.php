@@ -23,7 +23,8 @@ return new class extends Migration
 
             // Doar timestamp de actualizare (nu avem nevoie de created_at)
             $table->timestamp('updated_at')
-                ->default(DB::raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'));
+                ->useCurrent()
+                ->useCurrentOnUpdate();
         });
 
         // Inserăm setările inițiale din sistem
@@ -31,22 +32,22 @@ return new class extends Migration
             [
                 'key_name' => 'app_version',
                 'value' => '1.0.0',
-                'json_value' => null
+                'json_value' => null,
             ],
             [
                 'key_name' => 'monthly_free_limit',
                 'value' => '200',
-                'json_value' => null
+                'json_value' => null,
             ],
             [
                 'key_name' => 'plus_monthly_price_eur',
                 'value' => '2.00',
-                'json_value' => null
+                'json_value' => null,
             ],
             [
                 'key_name' => 'ai_suggestion_limit_plus',
                 'value' => '30',
-                'json_value' => null
+                'json_value' => null,
             ],
             [
                 'key_name' => 'regex_patterns',
@@ -59,9 +60,9 @@ return new class extends Migration
                     'contact' => '\\b(sun[aă] pe|trimite email lui|contacteaz[aă])\\b',
                     'recipe' => '\\b(rețetă|ingrediente|preparare)\\b',
                     'bookmark' => '\\b(https?://|www\\.|link|url)\\b',
-                    'measurement' => '\\b(\\d+[.,]?\\d*\\s*(m|kg|l|cm))\\b'
-                ])
-            ]
+                    'measurement' => '\\b(\\d+[.,]?\\d*\\s*(m|kg|l|cm))\\b',
+                ]),
+            ],
         ]);
     }
 
