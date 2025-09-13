@@ -4,12 +4,12 @@ namespace App\Services\Reminders;
 
 use App\Models\User;
 use App\Services\Reminders\Contracts\ReminderDeliveryInterface;
-use App\Services\Telegram\TelegramReminderService;
+use App\Services\Telegram\TelegramService;
 
 class TelegramReminderDelivery implements ReminderDeliveryInterface
 {
     public function __construct(
-        private TelegramReminderService $telegramService
+        private TelegramService $telegramService
     ) {}
 
     public function sendReminder(string $recipient, string $reminderTitle, string $reminderContent): bool

@@ -3,7 +3,7 @@
 namespace App\Services\Messaging;
 
 use App\Models\Note;
-use App\Services\Telegram\TelegramReminderService;
+use App\Services\Telegram\TelegramService;
 use App\Services\WhatsApp\WhatsAppReminderService;
 use Illuminate\Support\Facades\Log;
 
@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Log;
 class NotificationService
 {
     public function __construct(
-        private readonly TelegramReminderService $telegramService,
+        private readonly TelegramService $telegramService,
         private readonly WhatsAppReminderService $whatsAppService
     ) {}
 

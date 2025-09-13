@@ -28,7 +28,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(\App\Services\WhatsApp\WhatsAppReminderService::class);
-        $this->app->singleton(\App\Services\Telegram\TelegramReminderService::class);
+        $this->app->singleton(\App\Services\Telegram\TelegramService::class);
         $this->app->singleton(\App\Services\Reminders\ReminderSchedulingService::class);
     }
 

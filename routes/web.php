@@ -13,10 +13,18 @@ use Inertia\Inertia;
 
 // Language Switcher
 Route::post('/language', function (Request $request) {
-    $request->validate([
+    $validated = $request->validate([
         'locale' => 'required|in:en,ro',
     ]);
-    session()->put('locale', $request->input('locale'));
+
+    $locale = $validated['locale'];
+
+    session()->put('locale', $locale);
+
+    if ($request->user()) {
+        $request->user()->update(['language' => $locale]);
+    }
+
     return redirect()->back();
 })->name('language.switch');
 
@@ -42,6 +50,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //dashboard
     Route::get('/dashboard', [NoteController::class, 'dashboard'])->name('dashboard');
     Route::post('/notes', [NoteController::class, 'store'])->name('notes.store');
+    
+    // Dashboard API endpoints
+    Route::get('/api/summary/daily', [NoteController::class, 'getDailySummary'])->name('api.summary.daily');
+    Route::get('/api/reminders/active', [NoteController::class, 'getActiveReminders'])->name('api.reminders.active');
+    Route::post('/api/reminders/{reminderId}/complete', [NoteController::class, 'completeReminder'])->name('api.reminders.complete');
+    
     //notes
     Route::post('/notes/{note}/toggle-favorite', [NoteController::class, 'toggleFavorite'])
         ->name('notes.toggle-favorite');

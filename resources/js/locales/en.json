@@ -1,4 +1,9 @@
 {
+  "errors": {
+    "loading_summary": "Failed to load daily summary",
+    "loading_reminders": "Failed to load reminders",
+    "loadingNotes": "Failed to load notes"
+  },
   "common": {
     "features": "Features",
     "pricing": "Pricing",
@@ -30,7 +35,8 @@
     "delete": "Delete",
     "edit": "Edit",
     "confirm": "Confirm",
-    "back_to_dashboard": "Back to Dashboard"
+    "back_to_dashboard": "Back to Dashboard",
+    "try_again": "Try again"
   },
   "landing": {
     "title": "Welcome to MicroNote",
@@ -127,6 +133,20 @@
     "add_to_favorites": "Add to favorites",
     "user_settings": "User settings",
     "search_in_notes": "Search in notes...",
+    "daily_summary": "Daily Summary",
+    "active_reminders": "Active Reminders",
+    "tasks_today": "Tasks Today",
+    "events_today": "Events Today",
+    "priority_tasks": "Priority Tasks",
+    "upcoming_events": "Upcoming Events",
+    "more_tasks": "more tasks",
+    "more_events": "more events",
+    "no_tasks_today": "No tasks for today!",
+    "enjoy_free_time": "Enjoy your free time",
+    "no_active_reminders": "No active reminders",
+    "all_caught_up": "You're all caught up!",
+    "mark_reminder_done": "Mark as done",
+    "view_all_reminders": "View all reminders",
     "upgrade_to_plus": "Upgrade to Plus",
     "telegram_connection": "Telegram Connection"
   },

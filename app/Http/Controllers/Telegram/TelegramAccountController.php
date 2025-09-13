@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Telegram;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendWelcomeMessageJob;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,6 +27,8 @@ class TelegramAccountController extends Controller
         $user = Auth::user();
         $user->telegram_id = $validated['telegram_id'];
         $user->save();
+
+        SendWelcomeMessageJob::dispatch($user);
 
         return redirect()->route('dashboard')->with('success', 'Contul Telegram a fost conectat cu succes!');
     }

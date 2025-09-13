@@ -1,4 +1,9 @@
 {
+  "errors": {
+    "loading_summary": "Eroare la încărcarea rezumatului zilnic",
+    "loading_reminders": "Eroare la încărcarea mementourilor",
+    "loadingNotes": "Eroare la încărcarea notițelor"
+  },
   "common": {
     "features": "Funcționalități",
     "pricing": "Prețuri",
@@ -30,7 +35,8 @@
     "delete": "Șterge",
     "edit": "Editează",
     "confirm": "Confirmă",
-    "back_to_dashboard": "Înapoi la panoul principal"
+    "back_to_dashboard": "Înapoi la panoul principal",
+    "try_again": "Încearcă din nou"
   },
   "landing": {
     "title": "Bun venit la MicroNote",
@@ -127,6 +133,20 @@
     "add_to_favorites": "Adaugă la favorite",
     "user_settings": "Setări utilizator",
     "search_in_notes": "Caută în notițe...",
+    "daily_summary": "Rezumatul Zilei",
+    "active_reminders": "Mementouri Active",
+    "tasks_today": "Sarcini Azi",
+    "events_today": "Evenimente Azi",
+    "priority_tasks": "Sarcini Prioritare",
+    "upcoming_events": "Evenimente Viitoare",
+    "more_tasks": "sarcini în plus",
+    "more_events": "evenimente în plus",
+    "no_tasks_today": "Nicio sarcină pentru azi!",
+    "enjoy_free_time": "Bucură-te de timpul liber",
+    "no_active_reminders": "Niciun memento activ",
+    "all_caught_up": "Ești la zi cu totul!",
+    "mark_reminder_done": "Marchează ca făcut",
+    "view_all_reminders": "Vezi toate mementourile",
     "upgrade_to_plus": "Treci la Plus",
     "telegram_connection": "Conexiune Telegram"
   },

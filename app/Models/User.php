@@ -15,8 +15,6 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
-    public mixed $whatsapp_id;
-
     /**
      * The attributes that are mass assignable.
      *
@@ -31,6 +29,7 @@ class User extends Authenticatable
         'whatsapp_phone',
         'uuid',
         'plan',
+        'language',
         'monthly_notes_limit',
         'notes_count',
         'daily_summary_enabled',
@@ -93,4 +92,14 @@ class User extends Authenticatable
         return $this->plan === 'plus';
     }
 
+    /**
+     * Route notifications for the Telegram channel.
+     *
+     * @param  \Illuminate\Notifications\Notification  $notification
+     * @return string|null
+     */
+    public function routeNotificationForTelegram($notification): ?string
+    {
+        return $this->telegram_id;
+    }
 }

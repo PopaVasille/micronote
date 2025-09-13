@@ -13,6 +13,8 @@ import DashboardSidebar from '@/Components/Dashboard/DashboardSidebar.vue';
 import DashboardHeader from '@/Components/Dashboard/DashboardHeader.vue';
 import FilterToolbar from '@/Components/Dashboard/FilterToolbar.vue';
 import NoteGrid from '@/Components/Dashboard/NoteGrid.vue';
+import DailySummaryCard from '@/Components/Dashboard/DailySummaryCard.vue';
+import ActiveRemindersCard from '@/Components/Dashboard/ActiveRemindersCard.vue';
 
 const { t } = useI18n();
 const page = usePage();
@@ -132,6 +134,12 @@ const openCreateModal = () => {
     showCreateModal.value = true;
 };
 
+// Summary card handlers
+const handleReminderCompleted = () => {
+    // Refresh the notes list when a reminder is completed
+    setTimeout(() => fetchNotes(currentFilter.value), 1000);
+};
+
 // Lifecycle Hooks
 onMounted(() => {
     if (!page.props.notes) {
@@ -181,20 +189,36 @@ watch(searchQuery, debouncedSearch);
                 />
 
                 <main class="flex-1 p-4 overflow-auto">
-                    <FilterToolbar
-                        :current-filter="currentFilter"
-                        :sort-direction="sortDirection"
-                        @filter-changed="fetchNotes($event)"
-                        @sort-changed="handleSortChange"
-                    />
-                    <NoteGrid
-                        :notes="notes"
-                        :is-loading="isLoading"
-                        @toggle-favorite="toggleFavorite"
-                        @toggle-completed="toggleCompleted"
-                        @open-note-details="openNoteDetails"
-                        @open-create-modal="openCreateModal"
-                    />
+                    <!-- Summary Section - Mobile-First Design -->
+                    <div class="mb-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+                            <DailySummaryCard
+                                @filter-tasks="currentFilter = 'task'"
+                                @filter-events="currentFilter = 'event'"
+                            />
+                            <ActiveRemindersCard
+                                @reminder-completed="handleReminderCompleted"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Main Notes Section -->
+                    <div class="space-y-4">
+                        <FilterToolbar
+                            :current-filter="currentFilter"
+                            :sort-direction="sortDirection"
+                            @filter-changed="fetchNotes($event)"
+                            @sort-changed="handleSortChange"
+                        />
+                        <NoteGrid
+                            :notes="notes"
+                            :is-loading="isLoading"
+                            @toggle-favorite="toggleFavorite"
+                            @toggle-completed="toggleCompleted"
+                            @open-note-details="openNoteDetails"
+                            @open-create-modal="openCreateModal"
+                        />
+                    </div>
                 </main>
             </div>
         </div>

@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Note;
+use App\Models\Reminder;
 use App\Http\Requests\UpdateNoteRequest;
 use App\Repositories\Note\Contracts\NoteRepositoryInterface;
 use App\Services\Classification\MessageClassificationService;
+use App\Services\DailySummary\DailySummaryService;
+use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -204,5 +207,141 @@ class NoteController extends Controller
         $this->noteRepository->update($note, ['metadata' => ['items' => $validated['items']]]);
 
         return back()->with('banner', 'Itemele au fost actualizat!');
+    }
+
+    /**
+     * Get daily summary data for dashboard
+     */
+    public function getDailySummary(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $date = Carbon::now($user->daily_summary_timezone ?? 'Europe/Bucharest');
+        
+        // Get tasks due today
+        $tasksToday = $user->notes()
+            ->where('note_type', Note::TYPE_TASK)
+            ->where('is_completed', false)
+            ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.due_date')) = ?", [$date->format('Y-m-d')])
+            ->orderByDesc('priority')
+            ->limit(3)
+            ->get(['id', 'title', 'priority', 'metadata']);
+
+        // Get events today
+        $eventsToday = $user->notes()
+            ->where('note_type', Note::TYPE_EVENT)
+            ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.event_date')) = ?", [$date->format('Y-m-d')])
+            ->orderByRaw("JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.event_time'))")
+            ->limit(3)
+            ->get(['id', 'title', 'metadata']);
+
+        // Count total tasks and events for today
+        $totalTasks = $user->notes()
+            ->where('note_type', Note::TYPE_TASK)
+            ->where('is_completed', false)
+            ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.due_date')) = ?", [$date->format('Y-m-d')])
+            ->count();
+
+        $totalEvents = $user->notes()
+            ->where('note_type', Note::TYPE_EVENT)
+            ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.event_date')) = ?", [$date->format('Y-m-d')])
+            ->count();
+
+        return response()->json([
+            'tasks_today' => $totalTasks,
+            'events_today' => $totalEvents,
+            'items' => [
+                'tasks' => $tasksToday->map(function ($task) {
+                    return [
+                        'id' => $task->id,
+                        'title' => $task->title,
+                        'priority' => $task->priority,
+                        'due_time' => $task->metadata['due_time'] ?? null,
+                        'type' => 'task'
+                    ];
+                }),
+                'events' => $eventsToday->map(function ($event) {
+                    return [
+                        'id' => $event->id,
+                        'title' => $event->title,
+                        'event_time' => $event->metadata['event_time'] ?? null,
+                        'type' => 'event'
+                    ];
+                })
+            ]
+        ]);
+    }
+
+    /**
+     * Get active reminders for dashboard
+     */
+    public function getActiveReminders(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        
+        // Get next 4 upcoming reminders
+        $activeReminders = Reminder::whereHas('note', function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                      ->where('note_type', Note::TYPE_REMINDER);
+            })
+            ->where('is_sent', false)
+            ->where('next_remind_at', '>', now())
+            ->orderBy('next_remind_at')
+            ->with(['note:id,title'])
+            ->limit(4)
+            ->get(['id', 'note_id', 'next_remind_at', 'message']);
+
+        return response()->json(
+            $activeReminders->map(function ($reminder) {
+                return [
+                    'id' => $reminder->id,
+                    'note_id' => $reminder->note_id,
+                    'title' => $reminder->note->title ?? $reminder->message,
+                    'remind_at' => $reminder->next_remind_at->format('Y-m-d H:i'),
+                    'remind_at_human' => $this->formatRemindTime($reminder->next_remind_at),
+                ];
+            })
+        );
+    }
+
+    /**
+     * Mark a reminder as completed (complete associated note)
+     */
+    public function completeReminder(Request $request, int $reminderId)
+    {
+        $user = $request->user();
+        
+        $reminder = Reminder::whereHas('note', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->findOrFail($reminderId);
+
+        // Mark the associated note as completed
+        if ($reminder->note && !$reminder->note->is_completed) {
+            $reminder->note->update(['is_completed' => true]);
+        }
+
+        // Delete the reminder to stop future notifications
+        $reminder->delete();
+
+        // For Inertia.js requests, return a redirect back with success message
+        return back()->with('success', 'Memento marcat ca finalizat!');
+    }
+
+    /**
+     * Format reminder time for human reading
+     */
+    private function formatRemindTime(Carbon $remindAt): string
+    {
+        $now = now();
+        
+        if ($remindAt->isToday()) {
+            return 'Azi, ' . $remindAt->format('H:i');
+        } elseif ($remindAt->isTomorrow()) {
+            return 'Mâine, ' . $remindAt->format('H:i');
+        } elseif ($remindAt->diffInDays($now) <= 7) {
+            return $remindAt->locale('ro')->dayName . ', ' . $remindAt->format('H:i');
+        } else {
+            return $remindAt->format('d.m.Y, H:i');
+        }
     }
 }

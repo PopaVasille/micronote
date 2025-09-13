@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Api;
 use Telegram\Bot\Exceptions\TelegramSDKException;
 
-class TelegramReminderService
+class TelegramService
 {
     private Api $telegram;
 
