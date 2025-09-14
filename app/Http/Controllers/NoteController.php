@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
@@ -128,7 +129,22 @@ class NoteController extends Controller
      */
     public function show(Note $note)
     {
-        //
+        // Verify that the user owns this note
+        $this->authorize('view', $note);
+
+        // Return note data as JSON for API requests
+        return response()->json([
+            'id' => $note->id,
+            'title' => $note->title,
+            'content' => $note->content,
+            'note_type' => $note->note_type,
+            'priority' => $note->priority,
+            'is_completed' => $note->is_completed,
+            'is_favorite' => $note->is_favorite,
+            'metadata' => $note->metadata,
+            'created_at' => $note->created_at->toISOString(),
+            'updated_at' => $note->updated_at->toISOString(),
+        ]);
     }
 
     /**
@@ -276,31 +292,64 @@ class NoteController extends Controller
      */
     public function getActiveReminders(Request $request): JsonResponse
     {
-        $user = $request->user();
-        
-        // Get next 4 upcoming reminders
-        $activeReminders = Reminder::whereHas('note', function ($query) use ($user) {
-                $query->where('user_id', $user->id)
-                      ->where('note_type', Note::TYPE_REMINDER);
-            })
-            ->where('is_sent', false)
-            ->where('next_remind_at', '>', now())
-            ->orderBy('next_remind_at')
-            ->with(['note:id,title'])
-            ->limit(4)
-            ->get(['id', 'note_id', 'next_remind_at', 'message']);
+        try {
+            $user = $request->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'error' => 'Unauthorized access',
+                    'message' => 'User authentication required'
+                ], 401);
+            }
+            
+            // Get next 4 upcoming reminders
+            $activeReminders = Reminder::whereHas('note', function ($query) use ($user) {
+                    $query->where('user_id', $user->id)
+                          ->where('note_type', Note::TYPE_REMINDER);
+                })
+                ->where('is_sent', false)
+                ->where('next_remind_at', '>', now())
+                ->orderBy('next_remind_at')
+                ->with(['note:id,title'])
+                ->limit(4)
+                ->get(['id', 'note_id', 'next_remind_at', 'message']);
 
-        return response()->json(
-            $activeReminders->map(function ($reminder) {
-                return [
-                    'id' => $reminder->id,
-                    'note_id' => $reminder->note_id,
-                    'title' => $reminder->note->title ?? $reminder->message,
-                    'remind_at' => $reminder->next_remind_at->format('Y-m-d H:i'),
-                    'remind_at_human' => $this->formatRemindTime($reminder->next_remind_at),
-                ];
-            })
-        );
+            return response()->json(
+                $activeReminders->map(function ($reminder) {
+                    return [
+                        'id' => $reminder->id,
+                        'note_id' => $reminder->note_id,
+                        'title' => $reminder->note->title ?? $reminder->message ?? 'Untitled Reminder',
+                        'remind_at' => $reminder->next_remind_at->format('Y-m-d H:i'),
+                        'remind_at_human' => $this->formatRemindTime($reminder->next_remind_at),
+                    ];
+                })
+            );
+
+        } catch (\Illuminate\Database\QueryException $e) {
+            Log::error('Database error in getActiveReminders', [
+                'user_id' => $request->user()?->id,
+                'error' => $e->getMessage(),
+                'code' => $e->getCode()
+            ]);
+
+            return response()->json([
+                'error' => 'Database error',
+                'message' => 'Unable to retrieve reminders due to database issues'
+            ], 500);
+
+        } catch (\Exception $e) {
+            Log::error('Unexpected error in getActiveReminders', [
+                'user_id' => $request->user()?->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'error' => 'Server error',
+                'message' => 'An unexpected error occurred while retrieving reminders'
+            ], 500);
+        }
     }
 
     /**
@@ -310,21 +359,369 @@ class NoteController extends Controller
     {
         $user = $request->user();
         
-        $reminder = Reminder::whereHas('note', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })
-            ->findOrFail($reminderId);
-
-        // Mark the associated note as completed
-        if ($reminder->note && !$reminder->note->is_completed) {
-            $reminder->note->update(['is_completed' => true]);
+        if (!$user) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'error' => 'Unauthorized',
+                    'message' => 'User authentication required'
+                ], 401);
+            }
+            return back()->withErrors(['message' => 'Sesiunea a expirat. Reîncarcă pagina.']);
         }
 
-        // Delete the reminder to stop future notifications
-        $reminder->delete();
+        // Validate reminder ID
+        if (!is_numeric($reminderId) || $reminderId <= 0) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'error' => 'Invalid reminder ID',
+                    'message' => 'Reminder ID must be a positive integer'
+                ], 400);
+            }
+            return back()->withErrors(['message' => 'ID-ul mementoului nu este valid.']);
+        }
 
-        // For Inertia.js requests, return a redirect back with success message
-        return back()->with('success', 'Memento marcat ca finalizat!');
+        try {
+            $completedReminder = null;
+            
+            \DB::transaction(function () use ($user, $reminderId, &$completedReminder) {
+                $reminder = Reminder::whereHas('note', function ($query) use ($user) {
+                        $query->where('user_id', $user->id);
+                    })
+                    ->lockForUpdate()
+                    ->find($reminderId);
+
+                if (!$reminder) {
+                    throw new \Illuminate\Database\Eloquent\ModelNotFoundException('Reminder not found');
+                }
+
+                // Mark the associated note as completed
+                if ($reminder->note && !$reminder->note->is_completed) {
+                    $reminder->note->update(['is_completed' => true]);
+                }
+
+                // Store reminder info before deletion
+                $completedReminder = [
+                    'id' => $reminder->id,
+                    'title' => $reminder->note->title ?? $reminder->message ?? 'Unknown'
+                ];
+
+                // Delete the reminder to stop future notifications
+                $reminder->delete();
+            }, 3); // 3 attempts for deadlock handling
+
+            Log::info('Reminder completed successfully', [
+                'reminder_id' => $reminderId,
+                'user_id' => $user->id,
+                'reminder_title' => $completedReminder['title']
+            ]);
+
+            // For JSON requests (API), return JSON response
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Memento marcat ca finalizat!',
+                    'reminder_id' => $reminderId
+                ]);
+            }
+
+            // For Inertia.js requests, return a redirect back with success message
+            return back()->with('success', 'Memento marcat ca finalizat!');
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::warning('Reminder not found for completion', [
+                'reminder_id' => $reminderId,
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'error' => 'Reminder not found',
+                    'message' => 'Mementoul nu a fost găsit sau nu îți aparține.'
+                ], 404);
+            }
+            return back()->withErrors(['message' => 'Mementoul nu a fost găsit sau nu îți aparține.']);
+
+        } catch (\Illuminate\Database\QueryException $e) {
+            Log::error('Database error completing reminder', [
+                'reminder_id' => $reminderId,
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'code' => $e->getCode()
+            ]);
+
+            $message = 'Eroare de bază de date. Încearcă din nou în câteva momente.';
+            
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'error' => 'Database error',
+                    'message' => $message
+                ], 500);
+            }
+            return back()->withErrors(['message' => $message]);
+
+        } catch (\Illuminate\Database\DeadlockException $e) {
+            Log::warning('Deadlock detected while completing reminder', [
+                'reminder_id' => $reminderId,
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+
+            $message = 'Mementoul este în curs de procesare. Încearcă din nou în câteva secunde.';
+            
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'error' => 'Concurrent operation',
+                    'message' => $message
+                ], 409);
+            }
+            return back()->withErrors(['message' => $message]);
+
+        } catch (\Exception $e) {
+            Log::error('Unexpected error completing reminder', [
+                'reminder_id' => $reminderId,
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            $message = 'A apărut o eroare neașteptată la finalizarea mementoului.';
+            
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'error' => 'Server error',
+                    'message' => $message
+                ], 500);
+            }
+            return back()->withErrors(['message' => $message]);
+        }
+    }
+
+    /**
+     * Get active tasks for dashboard
+     */
+    public function getActiveTasks(Request $request): JsonResponse
+    {
+        try {
+            $user = $request->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'error' => 'Unauthorized access',
+                    'message' => 'User authentication required'
+                ], 401);
+            }
+
+            $today = Carbon::now($user->daily_summary_timezone ?? 'Europe/Bucharest')->format('Y-m-d');
+            
+            // Get tasks with due date = today and is_completed = false
+            $tasksWithDueDate = $user->notes()
+                ->where('note_type', Note::TYPE_TASK)
+                ->where('is_completed', false)
+                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.due_date')) = ?", [$today])
+                ->orderByDesc('priority')
+                ->orderBy('created_at', 'desc')
+                ->limit(50) // Prevent excessive data transfer
+                ->get(['id', 'title', 'priority', 'metadata', 'created_at', 'updated_at']);
+
+            // Get tasks with due_date = null and is_completed = false
+            $tasksWithoutDueDate = $user->notes()
+                ->where('note_type', Note::TYPE_TASK)
+                ->where('is_completed', false)
+                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.due_date')) IS NULL")
+                ->orderByDesc('priority')
+                ->orderBy('created_at', 'desc')
+                ->limit(50) // Prevent excessive data transfer
+                ->get(['id', 'title', 'priority', 'metadata', 'created_at', 'updated_at']);
+
+            return response()->json([
+                'tasks_with_due_date' => $tasksWithDueDate->map(function ($task) {
+                    return [
+                        'id' => $task->id,
+                        'title' => $task->title ?? 'Untitled Task',
+                        'priority' => $task->priority ?? 1,
+                        'due_date' => $task->metadata['due_date'] ?? null,
+                        'due_time' => $task->metadata['due_time'] ?? null,
+                        'created_at' => $task->created_at->toISOString(),
+                        'updated_at' => $task->updated_at->toISOString(),
+                        'note_type' => 'task'
+                    ];
+                }),
+                'tasks_without_due_date' => $tasksWithoutDueDate->map(function ($task) {
+                    return [
+                        'id' => $task->id,
+                        'title' => $task->title ?? 'Untitled Task',
+                        'priority' => $task->priority ?? 1,
+                        'due_date' => null,
+                        'due_time' => null,
+                        'created_at' => $task->created_at->toISOString(),
+                        'updated_at' => $task->updated_at->toISOString(),
+                        'note_type' => 'task'
+                    ];
+                }),
+                'total_count' => $tasksWithDueDate->count() + $tasksWithoutDueDate->count(),
+                'success' => true
+            ]);
+
+        } catch (\Illuminate\Database\QueryException $e) {
+            Log::error('Database error in getActiveTasks', [
+                'user_id' => $request->user()?->id,
+                'error' => $e->getMessage(),
+                'code' => $e->getCode()
+            ]);
+
+            return response()->json([
+                'error' => 'Database error',
+                'message' => 'Unable to retrieve tasks due to database issues'
+            ], 500);
+
+        } catch (\Exception $e) {
+            Log::error('Unexpected error in getActiveTasks', [
+                'user_id' => $request->user()?->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'error' => 'Server error',
+                'message' => 'An unexpected error occurred while retrieving tasks'
+            ], 500);
+        }
+    }
+
+    /**
+     * Mark a task as completed
+     */
+    public function completeTask(Request $request, int $taskId)
+    {
+        $user = $request->user();
+        
+        if (!$user) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'error' => 'Unauthorized',
+                    'message' => 'User authentication required'
+                ], 401);
+            }
+            return back()->withErrors(['message' => 'Sesiunea a expirat. Reîncarcă pagina.']);
+        }
+
+        // Validate task ID
+        if (!is_numeric($taskId) || $taskId <= 0) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'error' => 'Invalid task ID',
+                    'message' => 'Task ID must be a positive integer'
+                ], 400);
+            }
+            return back()->withErrors(['message' => 'ID-ul task-ului nu este valid.']);
+        }
+        
+        try {
+            $completedTask = null;
+            
+            \DB::transaction(function () use ($user, $taskId, &$completedTask) {
+                $task = Note::where('user_id', $user->id)
+                           ->where('id', $taskId)
+                           ->where('note_type', Note::TYPE_TASK)
+                           ->where('is_completed', false)
+                           ->lockForUpdate()
+                           ->first();
+                
+                if (!$task) {
+                    throw new \Illuminate\Database\Eloquent\ModelNotFoundException('Task not found or already completed');
+                }
+                
+                $task->update(['is_completed' => true]);
+                $completedTask = $task;
+            }, 3); // 3 attempts for deadlock handling
+
+            Log::info('Task completed successfully', [
+                'task_id' => $taskId,
+                'user_id' => $user->id,
+                'task_title' => $completedTask->title ?? 'Unknown'
+            ]);
+
+            // For JSON requests (API), return JSON response
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Task marcat ca finalizat!',
+                    'task_id' => $taskId
+                ]);
+            }
+
+            // For Inertia.js requests, return a redirect back with success message
+            return back()->with('success', 'Task marcat ca finalizat!');
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::warning('Task not found for completion', [
+                'task_id' => $taskId,
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'error' => 'Task not found',
+                    'message' => 'Task-ul nu a fost găsit sau nu îți aparține.'
+                ], 404);
+            }
+            return back()->withErrors(['message' => 'Task-ul nu a fost găsit sau nu îți aparține.']);
+
+        } catch (\Illuminate\Database\QueryException $e) {
+            Log::error('Database error completing task', [
+                'task_id' => $taskId,
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'code' => $e->getCode()
+            ]);
+
+            $message = 'Eroare de bază de date. Încearcă din nou în câteva momente.';
+            
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'error' => 'Database error',
+                    'message' => $message
+                ], 500);
+            }
+            return back()->withErrors(['message' => $message]);
+
+        } catch (\Illuminate\Database\DeadlockException $e) {
+            Log::warning('Deadlock detected while completing task', [
+                'task_id' => $taskId,
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+
+            $message = 'Task-ul este în curs de procesare. Încearcă din nou în câteva secunde.';
+            
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'error' => 'Concurrent operation',
+                    'message' => $message
+                ], 409);
+            }
+            return back()->withErrors(['message' => $message]);
+
+        } catch (\Exception $e) {
+            Log::error('Unexpected error completing task', [
+                'task_id' => $taskId,
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            $message = 'A apărut o eroare neașteptată la finalizarea task-ului.';
+            
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'error' => 'Server error',
+                    'message' => $message
+                ], 500);
+            }
+            return back()->withErrors(['message' => $message]);
+        }
     }
 
     /**

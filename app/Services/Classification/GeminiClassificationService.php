@@ -76,11 +76,11 @@ class GeminiClassificationService
     {
         // We use a HEREDOC string for better readability of the prompt.
         return <<<PROMPT
-                Ești un asistent expert în clasificare de text. Sarcina ta este să analizezezi mesajul utilizatorului și să îl clasifici în cea mai potrivită categorie din lista de mai jos.
+                Ești un asistent expert în clasificare de text. Sarcina ta este să analizezi mesajul utilizatorului și să îl clasifici în cea mai potrivită categorie din lista de mai jos.
 
             # CATEGORII DISPONIBILE:
-            - task: O acțiune sau o sarcină generală, fără un timp anume. Ceva ce trebuie "făcut". Ex: "repară gardul".
-            - reminder: O acțiune personală pe care TU trebuie să o faci la un moment specific. O "alarmă" pentru o acțiune. Dacă mesajul conține o acțiune ȘI un timp, este aproape întotdeauna un REMINDER. Ex: "sun-o pe mama la 17:00".
+            - task: O sarcină cu DEADLINE/TERMEN LIMITĂ. Ceva ce trebuie terminat PÂNĂ la un moment dat. Ex: "predau raportul până la 15".
+            - reminder: O NOTIFICARE ACTIVĂ la un moment specific. Vrei să fii AMINTIT să faci ceva la o oră exactă. Ex: "comand pâine la 17".
             - event: O întâmplare programată, care implică o locație sau alte persoane (întâlnire, rezervare, concert). Ceva la care participi. Ex: "întâlnire la birou la 10".
             - idea: Un concept, un gând sau o sugestie creativă.
             - shopping_list: O listă de produse sau articole de cumpărat.
@@ -90,14 +90,38 @@ class GeminiClassificationService
             - measurement: O valoare numerică cu o unitate de măsură (ex: cm, kg, m²).
             - simple: Orice mesaj care nu se încadrează clar în categoriile de mai sus.
 
+            # REGULI CRITICE PENTRU ROMÂNĂ:
+            
+            ## TASK (sarcină cu deadline):
+            - "până la [oră/dată]" → TASK: "predau raportul până la 15"
+            - "înainte de [oră]" → TASK: "termin înainte de 18"
+            - "deadline la [oră]" → TASK: "deadline la 17"
+            - "termen limită [oră]" → TASK: "termen limită vineri"
+            - "trebuie făcut până [oră]" → TASK: "trebuie făcut până mâine"
+            - Context de FINALIZARE/PREDARE/TERMINARE cu termen
+            
+            ## REMINDER (notificare activă):
+            - "la [oră]" FĂRĂ context de deadline → REMINDER: "comand pâine la 17"
+            - "în [timp relativ]" → REMINDER: "sun-o pe mama în 5 minute"
+            - "peste [timp]" → REMINDER: "amintește-mi peste o oră"
+            - "amintește-mi la [oră]" → REMINDER: "amintește-mi la 14:30"
+            - "să mă suni la [oră]" → REMINDER: "să mă suni la 10"
+            - "nu uita la [oră]" → REMINDER: "nu uita la 15 să..."
+            - Verbe de ACȚIUNE DIRECTĂ + timp specific → REMINDER
+            - Context de EXECUȚIE la un moment specific
+
             # EXEMPLE DE CLASIFICARE CORECTĂ:
-            - Mesaj: "trebuie sa termin raportul pana la finalul saptamanii" -> Răspuns: task
-            - Mesaj: "Comandă beton mâine la ora 19" -> Răspuns: reminder
-            - Mesaj: "Nu uita sa o suni pe mama maine la 12." -> Răspuns: reminder
-            - Mesaj: "cumparaturi: lapte, paine, oua de la lidl" -> Răspuns: shopping_list
-            - Mesaj: "ar fi misto sa facem un podcast despre istorie" -> Răspuns: idea
-            - Mesaj: "Rezervare la Trattoria vineri la 19:30 pentru 4 persoane" -> Răspuns: event
-            - Mesaj: "sedinta la birou maine la ora 11" -> Răspuns: event
+            - Mesaj: "trebuie să comand pâine la 17" → Răspuns: reminder (vrea notificare la 17 să comande)
+            - Mesaj: "sun-o pe mama în 5 minute" → Răspuns: reminder (vrea notificare peste 5 minute)
+            - Mesaj: "trebuie să predau raportul până la 15" → Răspuns: task (deadline la 15)
+            - Mesaj: "sună-mă la 14:30" → Răspuns: reminder (notificare activă la 14:30)
+            - Mesaj: "raportul trebuie gata înainte de 17" → Răspuns: task (deadline înainte de 17)
+            - Mesaj: "nu uita să iau medicamentele la 20" → Răspuns: reminder (notificare la 20)
+            - Mesaj: "trebuie să termin proiectul până vineri" → Răspuns: task (deadline vineri)
+            - Mesaj: "cumparaturi: lapte, paine, oua de la lidl" → Răspuns: shopping_list
+            - Mesaj: "ar fi misto sa facem un podcast despre istorie" → Răspuns: idea
+            - Mesaj: "Rezervare la Trattoria vineri la 19:30 pentru 4 persoane" → Răspuns: event
+            - Mesaj: "sedinta la birou maine la ora 11" → Răspuns: event
 
             # MESAJ DE ANALIZAT:
             "$messageContent"
@@ -578,9 +602,26 @@ Log::info('in extractia de informatii'.json_encode($jsonText));
         Ești un asistent expert în procesarea limbajului natural. Sarcina ta este să analizezi un text și să extragi TOATE acțiunile de TOATE tipurile într-un format JSON structurat.
 
         # REGULI DE CLASIFICARE (FOARTE IMPORTANT):
-        - REGULA DE AUR: Dacă o acțiune conține o referință temporală (ex: "mâine", "marți", "la ora 10", "peste 3 zile", "anul viitor"), este aproape întotdeauna un REMINDER.
-        - Un TASK este doar o acțiune generală, fără nicio referință temporală. Ex: "curăță garajul", "scrie articolul".
+        
+        ## REMINDER (notificare activă):
+        - "la [oră]" FĂRĂ context de deadline → REMINDER: "comand pâine la 17"
+        - "în [timp relativ]" → REMINDER: "sun-o pe mama în 5 minute"
+        - "peste [timp]" → REMINDER: "amintește-mi peste o oră"
+        - "amintește-mi la [oră]" → REMINDER: "amintește-mi la 14:30"
+        - "să mă suni la [oră]" → REMINDER: "să mă suni la 10"
+        - "nu uita la [oră]" → REMINDER: "nu uita la 15 să..."
+        - Verbe de ACȚIUNE DIRECTĂ + timp specific → REMINDER
+        - Context de EXECUȚIE la un moment specific
         - Dacă o acțiune este un REMINDER dar NU are o oră specifică (ex: "mâine", "marți"), setează ora implicită la 07:00:00.
+        
+        ## TASK (sarcină cu deadline):
+        - "până la [oră/dată]" → TASK: "predau raportul până la 15"
+        - "înainte de [oră]" → TASK: "termin înainte de 18"
+        - "deadline la [oră]" → TASK: "deadline la 17"
+        - "termen limită [oră]" → TASK: "termen limită vineri"
+        - "trebuie făcut până [oră]" → TASK: "trebuie făcut până mâine"
+        - Context de FINALIZARE/PREDARE/TERMINARE cu termen
+        - Un TASK fără referință temporală este o sarcină generală. Ex: "curăță garajul", "scrie articolul".
 
         # TIPURI DE ACȚIUNI ȘI FORMATUL LOR:
         - reminders: O acțiune personală cu timp specific.
@@ -735,8 +776,8 @@ Log::info('in extractia de informatii'.json_encode($jsonText));
         Ești un asistent expert în analiza textului. Sarcina ta este să identifici și să separi TOATE acțiunile distincte dintr-un mesaj. Nu trebuie să le procesezi, doar să le identifici.
 
         # TIPURI DE ACȚIUNI DE IDENTIFICAT:
-        - reminder: O acțiune cu o referință temporală (ex: mâine, la ora 5, marți).
-        - task: O sarcină generală fără timp.
+        - reminder: O NOTIFICARE ACTIVĂ la un moment specific. Vrei să fii AMINTIT să faci ceva la o oră exactă.
+        - task: O sarcină cu DEADLINE/TERMEN LIMITĂ. Ceva ce trebuie terminat PÂNĂ la un moment dat.
         - shopping_list: O listă de cumpărături.
         - idea: O idee sau un concept.
         - event: Un eveniment programat.
@@ -746,7 +787,27 @@ Log::info('in extractia de informatii'.json_encode($jsonText));
         - measurement: O măsurătoare.
         - simple: Orice altceva.
 
-        # REGULI:
+        # REGULI CRITICE PENTRU ROMÂNĂ:
+        
+        ## REMINDER (notificare activă):
+        - "la [oră]" FĂRĂ context de deadline → REMINDER: "comand pâine la 17"
+        - "în [timp relativ]" → REMINDER: "sun-o pe mama în 5 minute"
+        - "peste [timp]" → REMINDER: "amintește-mi peste o oră"
+        - "amintește-mi la [oră]" → REMINDER: "amintește-mi la 14:30"
+        - "să mă suni la [oră]" → REMINDER: "să mă suni la 10"
+        - "nu uita la [oră]" → REMINDER: "nu uita la 15 să..."
+        - Verbe de ACȚIUNE DIRECTĂ + timp specific → REMINDER
+        - Context de EXECUȚIE la un moment specific
+        
+        ## TASK (sarcină cu deadline):
+        - "până la [oră/dată]" → TASK: "predau raportul până la 15"
+        - "înainte de [oră]" → TASK: "termin înainte de 18"
+        - "deadline la [oră]" → TASK: "deadline la 17"
+        - "termen limită [oră]" → TASK: "termen limită vineri"
+        - "trebuie făcut până [oră]" → TASK: "trebuie făcut până mâine"
+        - Context de FINALIZARE/PREDARE/TERMINARE cu termen
+
+        # REGULI JSON:
         1.  Returnează un obiect JSON care conține o singură cheie: "actions".
         2.  Valoarea pentru "actions" trebuie să fie o listă (array) de obiecte.
         3.  Fiecare obiect din listă trebuie să aibă două chei: "type" (unul din tipurile de mai sus) și "text" (textul original corespunzător acelei acțiuni).
@@ -766,16 +827,26 @@ Log::info('in extractia de informatii'.json_encode($jsonText));
         }
 
         ## Exemplu 2:
-        Mesaj: "termină raportul și nu uita să o suni pe mama la 17:30"
+        Mesaj: "termină raportul până la 15 și nu uita să o suni pe mama la 17:30"
         Răspuns JSON:
         {
             "actions": [
-                { "type": "task", "text": "termină raportul" },
+                { "type": "task", "text": "termină raportul până la 15" },
                 { "type": "reminder", "text": "nu uita să o suni pe mama la 17:30" }
             ]
         }
 
-        ## Exemplu 3 (Păstrarea Contextului):
+        ## Exemplu 3:
+        Mesaj: "sun-o pe mama în 5 minute și predau raportul până mâine"
+        Răspuns JSON:
+        {
+            "actions": [
+                { "type": "reminder", "text": "sun-o pe mama în 5 minute" },
+                { "type": "task", "text": "predau raportul până mâine" }
+            ]
+        }
+
+        ## Exemplu 4 (Păstrarea Contextului):
         Mesaj: "trebuie sa dau comanda de manusi maine pentru buzau si miercuri pentru botosani"
         Răspuns JSON:
         {

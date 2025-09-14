@@ -55,8 +55,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/api/summary/daily', [NoteController::class, 'getDailySummary'])->name('api.summary.daily');
     Route::get('/api/reminders/active', [NoteController::class, 'getActiveReminders'])->name('api.reminders.active');
     Route::post('/api/reminders/{reminderId}/complete', [NoteController::class, 'completeReminder'])->name('api.reminders.complete');
+    Route::get('/api/tasks/active', [NoteController::class, 'getActiveTasks'])->name('api.tasks.active');
+    Route::post('/api/tasks/{taskId}/complete', [NoteController::class, 'completeTask'])->name('api.tasks.complete');
     
     //notes
+    Route::get('/api/notes/{note}', [NoteController::class, 'show'])->name('api.notes.show');
     Route::post('/notes/{note}/toggle-favorite', [NoteController::class, 'toggleFavorite'])
         ->name('notes.toggle-favorite');
     Route::post('/notes/{note}/toggle-completed', [NoteController::class, 'toggleCompleted'])

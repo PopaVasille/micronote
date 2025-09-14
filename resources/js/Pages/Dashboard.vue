@@ -13,8 +13,7 @@ import DashboardSidebar from '@/Components/Dashboard/DashboardSidebar.vue';
 import DashboardHeader from '@/Components/Dashboard/DashboardHeader.vue';
 import FilterToolbar from '@/Components/Dashboard/FilterToolbar.vue';
 import NoteGrid from '@/Components/Dashboard/NoteGrid.vue';
-import DailySummaryCard from '@/Components/Dashboard/DailySummaryCard.vue';
-import ActiveRemindersCard from '@/Components/Dashboard/ActiveRemindersCard.vue';
+import UnifiedTasksRemindersCard from '@/Components/Dashboard/UnifiedTasksRemindersCard.vue';
 
 const { t } = useI18n();
 const page = usePage();
@@ -140,6 +139,53 @@ const handleReminderCompleted = () => {
     setTimeout(() => fetchNotes(currentFilter.value), 1000);
 };
 
+const handleTaskCompleted = () => {
+    // Refresh the notes list when a task is completed
+    setTimeout(() => fetchNotes(currentFilter.value), 1000);
+};
+
+const handleTaskClicked = async (task) => {
+    // Find the full note data for this task
+    try {
+        const response = await fetch(`/api/notes/${task.id}`, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        if (response.ok) {
+            const noteData = await response.json();
+            openNoteDetails(noteData);
+        } else {
+            console.error('Failed to fetch note details');
+        }
+    } catch (error) {
+        console.error('Error fetching note details:', error);
+    }
+};
+
+const handleReminderClicked = async (reminder) => {
+    // Find the full note data for this reminder
+    try {
+        const response = await fetch(`/api/notes/${reminder.note_id}`, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        if (response.ok) {
+            const noteData = await response.json();
+            openNoteDetails(noteData);
+        } else {
+            console.error('Failed to fetch note details');
+        }
+    } catch (error) {
+        console.error('Error fetching note details:', error);
+    }
+};
+
 // Lifecycle Hooks
 onMounted(() => {
     if (!page.props.notes) {
@@ -191,15 +237,14 @@ watch(searchQuery, debouncedSearch);
                 <main class="flex-1 p-4 overflow-auto">
                     <!-- Summary Section - Mobile-First Design -->
                     <div class="mb-6">
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-                            <DailySummaryCard
-                                @filter-tasks="currentFilter = 'task'"
-                                @filter-events="currentFilter = 'event'"
-                            />
-                            <ActiveRemindersCard
-                                @reminder-completed="handleReminderCompleted"
-                            />
-                        </div>
+                        <UnifiedTasksRemindersCard
+                            @task-completed="handleTaskCompleted"
+                            @reminder-completed="handleReminderCompleted"
+                            @filter-tasks="currentFilter = 'task'"
+                            @filter-reminders="currentFilter = 'reminder'"
+                            @task-clicked="handleTaskClicked"
+                            @reminder-clicked="handleReminderClicked"
+                        />
                     </div>
 
                     <!-- Main Notes Section -->
