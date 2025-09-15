@@ -419,6 +419,161 @@ Log::info('in extractia de informatii'.json_encode($jsonText));
     }
 
     /**
+     * Extracts task details from a message using Gemini API.
+     *
+     * @param string $messageContent
+     * @return array|null The structured task details or null on failure.
+     */
+    public function extractTaskDetails(string $messageContent): ?array
+    {
+        if (!$this->isAvailable()) {
+            return null;
+        }
+
+        // Check rate limits before making API call
+        if (!$this->isWithinRateLimits()) {
+            Log::info('Gemini API rate limit exceeded - skipping task extraction');
+            return null;
+        }
+
+        $prompt = $this->buildTaskExtractionPrompt($messageContent);
+
+        try {
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'X-goog-api-key' => $this->apiKey,
+            ])->post($this->baseUrl, [
+                'contents' => [['parts' => [['text' => $prompt]]]],
+                'generationConfig' => [
+                    'response_mime_type' => 'application/json',
+                ]
+            ]);
+
+            if ($response->successful()) {
+                // Increment rate limiters only after successful call
+                $this->incrementRateLimiters();
+                $result = $response->json();
+                $jsonText = $result['candidates'][0]['content']['parts'][0]['text'] ?? null;
+                Log::info('Task extraction response: ' . json_encode($jsonText));
+
+                if ($jsonText) {
+                    $decoded = json_decode($jsonText, true);
+                    if (json_last_error() === JSON_ERROR_NONE && isset($decoded['message'])) {
+                        Log::info('Successfully extracted task details via AI.', $decoded);
+                        return $decoded;
+                    }
+                }
+            } else {
+                Log::error('Gemini API error for task extraction: ' . $response->body());
+            }
+        } catch (\Exception $e) {
+            Log::error('Gemini task extraction failed: ' . $e->getMessage());
+        }
+
+        return null;
+    }
+
+    /**
+     * Builds the prompt for task detail extraction.
+     *
+     * @param string $messageContent
+     * @return string
+     */
+    private function buildTaskExtractionPrompt(string $messageContent): string
+    {
+        $now = now()->toDateTimeString();
+        $tomorrow = now()->addDay()->toDateString();
+        $today = now()->toDateString();
+
+        return <<<PROMPT
+        Ești un asistent expert în extragerea de date din text. Sarcina ta este să analizezi un text și să extragi detaliile unui task într-un format JSON.
+
+        # INFORMAȚII DE EXTRAS:
+        - `message`: (string, obligatoriu) Textul curat al sarcinii/acțiunii, FĂRĂ nicio informație despre timp.
+        - `due_date`: (string, opțional) Data limită până când trebuie terminat task-ul, în format `YYYY-MM-DD`. Doar dacă este specificată.
+        - `due_time`: (string, opțional) Ora limită până când trebuie terminat task-ul, în format `HH:MM:SS`. Doar dacă este specificată în mesaj.
+
+        # REGULI DE INTERPRETARE TEMPORALĂ:
+        1. **Data de Referință:** Punctul de plecare pentru orice calcul este momentul curent: `$now`.
+        2. **Task vs Reminder:** Un task are TERMEN LIMITĂ (până când), un reminder are MOMENT SPECIFIC (când).
+        3. **Indicatori de due_date:**
+           - "până la [dată/oră]"
+           - "înainte de [dată]"
+           - "deadline [dată]"
+           - "termen limită [dată]"
+           - "trebuie făcut până [dată]"
+        4. **Interpretarea temporală:**
+           - "mâine" = `$tomorrow`
+           - "azi" = `$today`
+           - "marți", "miercuri", etc. = următoarea zi specificată
+        5. **Extragerea orei:**
+           - OBLIGATORIU: Dacă există ora specificată în mesaj (ex: "până la 15:30", "înainte de ora 18", "la 17:45"), extragi ora separat în câmpul `due_time`
+           - `due_date`: conține doar data în format "YYYY-MM-DD"
+           - `due_time`: conține doar ora în format "HH:MM:SS" (ex: "15:30:00")
+           - Dacă nu există oră specificată, nu include câmpul `due_time`
+
+        # EXEMPLE:
+
+        ## Exemplu 1: Task cu due date și oră
+        - Text: "trebuie sa predau raportul până la 15 decembrie la 17:30"
+        - Răspuns JSON:
+        {
+          "message": "să predau raportul",
+          "due_date": "2024-12-15",
+          "due_time": "17:30:00"
+        }
+
+        ## Exemplu 2: Task cu due date relativă și oră
+        - Text: "termin proiectul înainte de mâine la ora 16"
+        - Răspuns JSON:
+        {
+          "message": "să termin proiectul",
+          "due_date": "$tomorrow",
+          "due_time": "16:00:00"
+        }
+
+        ## Exemplu 3: Task fără due date specificată
+        - Text: "cumpără lapte"
+        - Răspuns JSON:
+        {
+          "message": "să cumpăr lapte"
+        }
+
+        ## Exemplu 4: Task cu deadline astăzi fără oră
+        - Text: "fac backup-ul până la sfârșitul zilei"
+        - Răspuns JSON:
+        {
+          "message": "să fac backup-ul",
+          "due_date": "$today"
+        }
+
+        ## Exemplu 5: Task cu oră explicită astăzi
+        - Text: "trimite email-ul până la 14:30"
+        - Răspuns JSON:
+        {
+          "message": "să trimit email-ul",
+          "due_date": "$today",
+          "due_time": "14:30:00"
+        }
+
+        ## Exemplu 6: Task cu oră explicită mâine
+        - Text: "predau proiectul până mâine la 15:30"
+        - Răspuns JSON:
+        {
+          "message": "să predau proiectul",
+          "due_date": "$tomorrow",
+          "due_time": "15:30:00"
+        }
+
+        # TEXT DE ANALIZAT:
+        `$messageContent`
+
+        # RĂSPUNS AȘTEPTAT:
+        Returnează DOAR formatul JSON valid, fără nicio altă explicație.
+        PROMPT;
+    }
+
+    /**
      * Fallback la clasificarea regex când Gemini nu funcționează
      *
      * @param  string  $messageContent

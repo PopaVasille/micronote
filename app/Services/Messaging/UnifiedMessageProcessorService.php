@@ -178,11 +178,20 @@ readonly class UnifiedMessageProcessorService
                         break;
 
                     case 'task':
+                        $taskDetails = $this->extractTaskMetadata($actionText, $logContext);
+                        $noteTitle = $this->generateNoteTitle($actionText, Note::TYPE_TASK, $canUseAI, $logContext);
+                        $metadata = $taskDetails ? [
+                            'due_date' => $taskDetails['due_date'] ?? null,
+                            'due_time' => $taskDetails['due_time'] ?? null
+                        ] : null;
+                        $noteContent = $taskDetails['message'] ?? $actionText;
+                        $note = $this->createNote($user->id, $incomingMessage->id, $noteTitle, $noteContent, Note::TYPE_TASK, $metadata, $rawData, $logContext);
+                        break;
+
                     case 'idea':
                     case 'simple':
                     default: // Tratează tipurile necunoscute ca notițe simple
                         $noteTypeConstant = match($actionType) {
-                            'task' => Note::TYPE_TASK,
                             'idea' => Note::TYPE_IDEA,
                             default => Note::TYPE_SIMPLE,
                         };
@@ -260,6 +269,7 @@ readonly class UnifiedMessageProcessorService
             // Extract metadata based on note type (existing Free logic)
             $metadata = null;
             $reminderDetails = null;
+            $taskDetails = null;
             $noteContent = $messageContent;
 
             if ($noteType === Note::TYPE_SHOPING_LIST) {
@@ -268,6 +278,15 @@ readonly class UnifiedMessageProcessorService
                 $reminderDetails = $this->extractReminderMetadata($messageContent, $logContext);
                 if ($reminderDetails) {
                     $noteContent = $reminderDetails['message'];
+                }
+            } elseif ($noteType === Note::TYPE_TASK && $canUseAI) {
+                $taskDetails = $this->extractTaskMetadata($messageContent, $logContext);
+                if ($taskDetails) {
+                    $metadata = [
+                        'due_date' => $taskDetails['due_date'] ?? null,
+                        'due_time' => $taskDetails['due_time'] ?? null
+                    ];
+                    $noteContent = $taskDetails['message'] ?? $messageContent;
                 }
             }
 
@@ -690,6 +709,29 @@ readonly class UnifiedMessageProcessorService
                 'error' => $e->getMessage()
             ]);
         }
+    }
+
+    /**
+     * Extract task metadata including due date
+     *
+     * @param string $messageContent
+     * @param array $logContext
+     * @return array|null
+     */
+    private function extractTaskMetadata(string $messageContent, array $logContext): ?array
+    {
+        Log::channel('trace')->info('UnifiedMessageProcessor: Extracting task details', $logContext);
+        $taskDetails = $this->geminiService->extractTaskDetails($messageContent);
+        if ($taskDetails) {
+            Log::channel('trace')->info('UnifiedMessageProcessor: Task details extracted', [
+                ...$logContext,
+                'details' => $taskDetails
+            ]);
+            return $taskDetails;
+        }
+
+        Log::channel('trace')->info('UnifiedMessageProcessor: No task details extracted', $logContext);
+        return null;
     }
 
     /**

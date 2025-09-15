@@ -29,6 +29,7 @@ return new class extends Migration
                 'shopping_list',
                 'task',
                 'idea',
+                'reminder',
                 'event',
                 'contact',
                 'recipe',

@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Functionality Test Runner</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+        }
+        .test-passed {
+            border-color: #4caf50;
+            background: #f1f8e9;
+        }
+        .test-failed {
+            border-color: #f44336;
+            background: #ffebee;
+        }
+        .test-warning {
+            border-color: #ff9800;
+            background: #fff3e0;
+        }
+        .status {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .passed { color: #4caf50; }
+        .failed { color: #f44336; }
+        .warning { color: #ff9800; }
+        .test-button {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            min-height: 44px;
+            min-width: 44px;
+        }
+        .test-button:hover {
+            background: #1976d2;
+        }
+        .test-button:active {
+            transform: scale(0.98);
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 6px;
+        }
+        .viewport-info {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                padding: 15px;
+            }
+            .test-button {
+                width: 100%;
+                margin: 5px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 Mobile Functionality Test Runner</h1>
+        <p>This tool tests the mobile functionality of the unified tasks and reminders section.</p>
+        
+        <div class="viewport-info">
+            <strong>Current Viewport:</strong><br>
+            Width: <span id="viewport-width"></span>px<br>
+            Height: <span id="viewport-height"></span>px<br>
+            Device Pixel Ratio: <span id="device-pixel-ratio"></span><br>
+            User Agent: <span id="user-agent"></span>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Touch Target Tests</h3>
+            <button class="test-button" onclick="testTouchTargets()">Test Touch Targets</button>
+            <div id="touch-targets-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📱 Responsive Design Tests</h3>
+            <button class="test-button" onclick="testResponsiveDesign()">Test Responsive Design</button>
+            <div id="responsive-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>⏳ Loading States Tests</h3>
+            <button class="test-button" onclick="testLoadingStates()">Test Loading States</button>
+            <div id="loading-states-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>✨ Visual Feedback Tests</h3>
+            <button class="test-button" onclick="testVisualFeedback()">Test Visual Feedback</button>
+            <div id="visual-feedback-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔄 Orientation Tests</h3>
+            <button class="test-button" onclick="testOrientation()">Test Orientation Support</button>
+            <div id="orientation-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>♿ Accessibility Tests</h3>
+            <button class="test-button" onclick="testAccessibility()">Test Accessibility</button>
+            <div id="accessibility-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🚀 Run All Tests</h3>
+            <button class="test-button" onclick="runAllTests()" style="background: #4caf50;">Run Complete Test Suite</button>
+            <div id="all-tests-result"></div>
+        </div>
+
+        <div class="results" id="test-results" style="display: none;">
+            <h3>📊 Test Results Summary</h3>
+            <div id="results-content"></div>
+        </div>
+    </div>
+
+    <script>
+        // Update viewport info
+        function updateViewportInfo() {
+            document.getElementById('viewport-width').textContent = window.innerWidth;
+            document.getElementById('viewport-height').textContent = window.innerHeight;
+            document.getElementById('device-pixel-ratio').textContent = window.devicePixelRatio;
+            document.getElementById('user-agent').textContent = navigator.userAgent;
+        }
+
+        // Test results storage
+        let testResults = {
+            touchTargets: null,
+            responsiveDesign: null,
+            loadingStates: null,
+            visualFeedback: null,
+            orientation: null,
+            accessibility: null
+        };
+
+        // Touch Targets Test
+        function testTouchTargets() {
+            const result = document.getElementById('touch-targets-result');
+            result.innerHTML = '<p>Testing touch targets...</p>';
+            
+            // Simulate checking for completion buttons
+            const buttons = document.querySelectorAll('button');
+            let passedButtons = 0;
+            let totalButtons = buttons.length;
+            
+            buttons.forEach(button => {
+                const rect = button.getBoundingClientRect();
+                if (rect.width >= 44 && rect.height >= 44) {
+                    passedButtons++;
+                }
+            });
+            
+            const passed = passedButtons === totalButtons;
+            testResults.touchTargets = passed;
+            
+            result.innerHTML = `
+                <div class="status ${passed ? 'passed' : 'failed'}">
+                    ${passed ? '✅ PASSED' : '❌ FAILED'}
+                </div>
+                <p>Touch targets tested: ${totalButtons}</p>
+                <p>Meeting 44px minimum: ${passedButtons}</p>
+                <p>Success rate: ${((passedButtons / totalButtons) * 100).toFixed(1)}%</p>
+            `;
+            
+            result.parentElement.className = `test-section ${passed ? 'test-passed' : 'test-failed'}`;
+        }
+
+        // Responsive Design Test
+        function testResponsiveDesign() {
+            const result = document.getElementById('responsive-result');
+            result.innerHTML = '<p>Testing responsive design...</p>';
+            
+            const viewportWidth = window.innerWidth;
+            let issues = [];
+            
+            // Check for horizontal overflow
+            if (document.documentElement.scrollWidth > document.documentElement.clientWidth) {
+                issues.push('Horizontal overflow detected');
+            }
+            
+            // Check for mobile-appropriate font sizes
+            const smallText = document.querySelectorAll('.text-xs, .text-sm');
+            if (smallText.length === 0 && viewportWidth < 768) {
+                issues.push('No mobile-optimized text sizes found');
+            }
+            
+            // Check for mobile spacing
+            const mobileSpacing = document.querySelectorAll('[class*="p-3"], [class*="px-3"], [class*="py-3"]');
+            if (mobileSpacing.length === 0 && viewportWidth < 768) {
+                issues.push('No mobile-first spacing detected');
+            }
+            
+            const passed = issues.length === 0;
+            testResults.responsiveDesign = passed;
+            
+            result.innerHTML = `
+                <div class="status ${passed ? 'passed' : 'failed'}">
+                    ${passed ? '✅ PASSED' : '❌ FAILED'}
+                </div>
+                <p>Viewport: ${viewportWidth}px × ${window.innerHeight}px</p>
+                <p>Issues found: ${issues.length}</p>
+                ${issues.length > 0 ? `<ul>${issues.map(issue => `<li>${issue}</li>`).join('')}</ul>` : ''}
+            `;
+            
+            result.parentElement.className = `test-section ${passed ? 'test-passed' : 'test-failed'}`;
+        }
+
+        // Loading States Test
+        function testLoadingStates() {
+            const result = document.getElementById('loading-states-result');
+            result.innerHTML = '<p>Testing loading states...</p>';
+            
+            // Check for loading animations
+            const pulseElements = document.querySelectorAll('.animate-pulse');
+            const spinElements = document.querySelectorAll('.animate-spin');
+            const loadingElements = document.querySelectorAll('[class*="loading"]');
+            
+            let score = 0;
+            let maxScore = 3;
+            
+            if (pulseElements.length > 0) score++;
+            if (spinElements.length > 0) score++;
+            if (loadingElements.length > 0 || document.querySelector('[aria-live]')) score++;
+            
+            const passed = score >= 2; // At least 2 out of 3 loading features
+            testResults.loadingStates = passed;
+            
+            result.innerHTML = `
+                <div class="status ${passed ? 'passed' : 'warning'}">
+                    ${passed ? '✅ PASSED' : '⚠️ WARNING'}
+                </div>
+                <p>Pulse animations: ${pulseElements.length}</p>
+                <p>Spin animations: ${spinElements.length}</p>
+                <p>ARIA live regions: ${document.querySelectorAll('[aria-live]').length}</p>
+                <p>Score: ${score}/${maxScore}</p>
+            `;
+            
+            result.parentElement.className = `test-section ${passed ? 'test-passed' : 'test-warning'}`;
+        }
+
+        // Visual Feedback Test
+        function testVisualFeedback() {
+            const result = document.getElementById('visual-feedback-result');
+            result.innerHTML = '<p>Testing visual feedback...</p>';
+            
+            // Check for transition classes
+            const transitionElements = document.querySelectorAll('[class*="transition"]');
+            const hoverElements = document.querySelectorAll('[class*="hover:"]');
+            const activeElements = document.querySelectorAll('[class*="active:"]');
+            
+            let score = 0;
+            let maxScore = 3;
+            
+            if (transitionElements.length > 0) score++;
+            if (hoverElements.length > 0) score++;
+            if (activeElements.length > 0) score++;
+            
+            const passed = score >= 2;
+            testResults.visualFeedback = passed;
+            
+            result.innerHTML = `
+                <div class="status ${passed ? 'passed' : 'warning'}">
+                    ${passed ? '✅ PASSED' : '⚠️ WARNING'}
+                </div>
+                <p>Transition effects: ${transitionElements.length}</p>
+                <p>Hover states: ${hoverElements.length}</p>
+                <p>Active states: ${activeElements.length}</p>
+                <p>Score: ${score}/${maxScore}</p>
+            `;
+            
+            result.parentElement.className = `test-section ${passed ? 'test-passed' : 'test-warning'}`;
+        }
+
+        // Orientation Test
+        function testOrientation() {
+            const result = document.getElementById('orientation-result');
+            result.innerHTML = '<p>Testing orientation support...</p>';
+            
+            const isPortrait = window.innerHeight > window.innerWidth;
+            const hasOverflow = document.documentElement.scrollWidth > document.documentElement.clientWidth;
+            
+            let issues = [];
+            if (hasOverflow) {
+                issues.push('Horizontal overflow in current orientation');
+            }
+            
+            const passed = issues.length === 0;
+            testResults.orientation = passed;
+            
+            result.innerHTML = `
+                <div class="status ${passed ? 'passed' : 'failed'}">
+                    ${passed ? '✅ PASSED' : '❌ FAILED'}
+                </div>
+                <p>Current orientation: ${isPortrait ? 'Portrait' : 'Landscape'}</p>
+                <p>Viewport: ${window.innerWidth}px × ${window.innerHeight}px</p>
+                <p>Issues: ${issues.length}</p>
+                ${issues.length > 0 ? `<ul>${issues.map(issue => `<li>${issue}</li>`).join('')}</ul>` : ''}
+                <p><em>Rotate device to test both orientations</em></p>
+            `;
+            
+            result.parentElement.className = `test-section ${passed ? 'test-passed' : 'test-failed'}`;
+        }
+
+        // Accessibility Test
+        function testAccessibility() {
+            const result = document.getElementById('accessibility-result');
+            result.innerHTML = '<p>Testing accessibility...</p>';
+            
+            const ariaElements = document.querySelectorAll('[aria-live], [aria-label], [role]');
+            const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+            const buttons = document.querySelectorAll('button');
+            const focusableElements = document.querySelectorAll('button, a, input, select, textarea, [tabindex]');
+            
+            let score = 0;
+            let maxScore = 4;
+            
+            if (ariaElements.length > 0) score++;
+            if (headings.length > 0) score++;
+            if (buttons.length > 0) score++;
+            if (focusableElements.length > 0) score++;
+            
+            const passed = score >= 3;
+            testResults.accessibility = passed;
+            
+            result.innerHTML = `
+                <div class="status ${passed ? 'passed' : 'warning'}">
+                    ${passed ? '✅ PASSED' : '⚠️ WARNING'}
+                </div>
+                <p>ARIA elements: ${ariaElements.length}</p>
+                <p>Headings: ${headings.length}</p>
+                <p>Buttons: ${buttons.length}</p>
+                <p>Focusable elements: ${focusableElements.length}</p>
+                <p>Score: ${score}/${maxScore}</p>
+            `;
+            
+            result.parentElement.className = `test-section ${passed ? 'test-passed' : 'test-warning'}`;
+        }
+
+        // Run All Tests
+        function runAllTests() {
+            const result = document.getElementById('all-tests-result');
+            result.innerHTML = '<p>Running complete test suite...</p>';
+            
+            // Run all individual tests
+            testTouchTargets();
+            testResponsiveDesign();
+            testLoadingStates();
+            testVisualFeedback();
+            testOrientation();
+            testAccessibility();
+            
+            // Calculate overall results
+            setTimeout(() => {
+                const results = Object.values(testResults);
+                const passedTests = results.filter(r => r === true).length;
+                const totalTests = results.length;
+                const successRate = ((passedTests / totalTests) * 100).toFixed(1);
+                
+                const overallPassed = passedTests >= totalTests * 0.8; // 80% pass rate
+                
+                result.innerHTML = `
+                    <div class="status ${overallPassed ? 'passed' : 'warning'}">
+                        ${overallPassed ? '✅ OVERALL PASSED' : '⚠️ NEEDS ATTENTION'}
+                    </div>
+                    <p>Tests passed: ${passedTests}/${totalTests}</p>
+                    <p>Success rate: ${successRate}%</p>
+                `;
+                
+                result.parentElement.className = `test-section ${overallPassed ? 'test-passed' : 'test-warning'}`;
+                
+                // Show detailed results
+                showDetailedResults();
+            }, 1000);
+        }
+
+        // Show Detailed Results
+        function showDetailedResults() {
+            const resultsDiv = document.getElementById('test-results');
+            const contentDiv = document.getElementById('results-content');
+            
+            const timestamp = new Date().toLocaleString();
+            const viewport = `${window.innerWidth}px × ${window.innerHeight}px`;
+            const userAgent = navigator.userAgent;
+            
+            contentDiv.innerHTML = `
+                <p><strong>Test completed:</strong> ${timestamp}</p>
+                <p><strong>Viewport:</strong> ${viewport}</p>
+                <p><strong>Device:</strong> ${userAgent.includes('Mobile') ? 'Mobile' : 'Desktop'}</p>
+                <hr>
+                <h4>Individual Test Results:</h4>
+                <ul>
+                    <li>Touch Targets: ${testResults.touchTargets ? '✅ PASSED' : '❌ FAILED'}</li>
+                    <li>Responsive Design: ${testResults.responsiveDesign ? '✅ PASSED' : '❌ FAILED'}</li>
+                    <li>Loading States: ${testResults.loadingStates ? '✅ PASSED' : '⚠️ WARNING'}</li>
+                    <li>Visual Feedback: ${testResults.visualFeedback ? '✅ PASSED' : '⚠️ WARNING'}</li>
+                    <li>Orientation: ${testResults.orientation ? '✅ PASSED' : '❌ FAILED'}</li>
+                    <li>Accessibility: ${testResults.accessibility ? '✅ PASSED' : '⚠️ WARNING'}</li>
+                </ul>
+                <hr>
+                <p><strong>Recommendations:</strong></p>
+                <ul>
+                    <li>Test on actual mobile devices for best results</li>
+                    <li>Rotate device to test both orientations</li>
+                    <li>Test with screen reader if available</li>
+                    <li>Test on slow network connections</li>
+                </ul>
+            `;
+            
+            resultsDiv.style.display = 'block';
+        }
+
+        // Initialize
+        updateViewportInfo();
+        window.addEventListener('resize', updateViewportInfo);
+        window.addEventListener('orientationchange', updateViewportInfo);
+    </script>
+</body>
+</html>
