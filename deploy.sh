@@ -1,36 +1,47 @@
 #!/bin/bash
+set -e # Exit immediately if a command exits with a non-zero status.
 
-# --- Deploy Script for MicroNote Staging ---
+echo "--- Starting MicroNote Deployment ---"
 
-echo "Starting deployment..."
+# --- Pre-flight Check ---
+if [ "$(id -u)" = "0" ]; then
+   echo "❌ This script should NOT be run as root. Run it as your application user (e.g., micronoteapp_staging)."
+   exit 1
+fi
 
-# 1. Get latest code
-git pull origin main # sau branch-ul tau
+# --- Code Update ---
+echo "➡️ Pulling latest code from main branch..."
+git pull origin main
 
-# 2. Install dependencies
-composer install --no-dev --optimize-autoloader
+# --- Backend Dependencies ---
+echo "➡️ Installing Composer dependencies..."
+composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+
+# --- Frontend Dependencies (Clean Install) ---
+echo "➡️ Performing clean install of NPM packages..."
+rm -rf node_modules package-lock.json
 npm install
+
+echo "➡️ Building frontend assets..."
 npm run build
 
-# 3. Run migrations
+# --- Application Setup ---
+echo "➡️ Running database migrations..."
 php artisan migrate --force
 
-# 4. Clear and rebuild cache
+echo "➡️ Clearing application caches..."
 php artisan view:clear
 php artisan route:clear
 php artisan config:clear
 php artisan cache:clear
 
-# php artisan config:cache
-# php artisan route:cache
-# php artisan view:cache
-
-echo "Setting permissions..."
-
-# 5. Set correct ownership and permissions
-# ATENTIE: Ruleaza script-ul cu un user care are drepturi sudo sau ajusteaza
-sudo chown -R micronoteapp_staging:www-data .
-sudo find . -type d -exec chmod 775 {} \;
+# --- Set Permissions ---
+# This is the ONLY part that needs elevated privileges.
+# It ensures the web server (www-data) can read the files and write to storage/logs.
+echo "➡️ Setting final permissions..."
+sudo chown -R $(whoami):www-data .
 sudo find . -type f -exec chmod 664 {} \;
+sudo find . -type d -exec chmod 775 {} \;
+sudo chmod -R ug+rwx storage bootstrap/cache
 
-echo "Deployment finished successfully!"
+echo "✅ Deployment finished successfully!"
