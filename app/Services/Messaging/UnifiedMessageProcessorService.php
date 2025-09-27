@@ -10,7 +10,6 @@ use App\Repositories\IncomingMessage\Contracts\IncomingMessageRepositoryInterfac
 use App\Repositories\Note\Contracts\NoteRepositoryInterface;
 use App\Services\Classification\GeminiClassificationService;
 use App\Services\Classification\HybridMessageClassificationService;
-use App\Services\Messaging\NotificationService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -25,12 +24,6 @@ readonly class UnifiedMessageProcessorService
 {
     /**
      * UnifiedMessageProcessorService constructor
-     *
-     * @param IncomingMessageRepositoryInterface $incomingMessageRepository
-     * @param NoteRepositoryInterface $noteRepository
-     * @param HybridMessageClassificationService $classificationService
-     * @param GeminiClassificationService $geminiService
-     * @param NotificationService $notificationService
      */
     public function __construct(
         public IncomingMessageRepositoryInterface $incomingMessageRepository,
@@ -46,12 +39,11 @@ readonly class UnifiedMessageProcessorService
      * This method replicates the exact logic from IncomingTelegramMessageProcessorService
      * but works for any channel type.
      *
-     * @param string $channelType The messaging channel ('telegram' or 'whatsapp')
-     * @param string $identifier The user identifier (telegram_id or wa_id)
-     * @param string $messageContent The message content
-     * @param array $rawData The complete webhook data
-     * @param string $correlationId Unique tracking ID
-     * @return IncomingMessage|null
+     * @param  string  $channelType  The messaging channel ('telegram' or 'whatsapp')
+     * @param  string  $identifier  The user identifier (telegram_id or wa_id)
+     * @param  string  $messageContent  The message content
+     * @param  array  $rawData  The complete webhook data
+     * @param  string  $correlationId  Unique tracking ID
      */
     public function processMessage(
         string $channelType,
@@ -63,7 +55,7 @@ readonly class UnifiedMessageProcessorService
         $logContext = [
             'correlation_id' => $correlationId,
             'channel' => $channelType,
-            'identifier' => $identifier
+            'identifier' => $identifier,
         ];
 
         Log::channel('trace')->info('UnifiedMessageProcessor: Starting message processing', $logContext);
@@ -72,8 +64,10 @@ readonly class UnifiedMessageProcessorService
             // Find user by channel-specific identifier
             $user = $this->findUserByChannel($channelType, $identifier);
 
-            if (!$user) {
+            if (! $user) {
                 Log::channel('trace')->warning('UnifiedMessageProcessor: User not found', $logContext);
+                $this->sendUserNotFoundMessage($channelType, $identifier, $correlationId);
+
                 return null;
             }
 
@@ -83,9 +77,11 @@ readonly class UnifiedMessageProcessorService
             // BIFURCAȚIE: Verificăm planul utilizatorului
             if ($user->isPremium()) {
                 Log::channel('trace')->info('UnifiedMessageProcessor: Processing Premium user message', $logContext);
+
                 return $this->processPremiumMessage($user, $messageContent, $rawData, $channelType, $identifier, $correlationId, $logContext);
             } else {
                 Log::channel('trace')->info('UnifiedMessageProcessor: Processing Free user message', $logContext);
+
                 return $this->processFreeMessage($user, $messageContent, $rawData, $channelType, $identifier, $correlationId, $logContext);
             }
 
@@ -93,23 +89,15 @@ readonly class UnifiedMessageProcessorService
             Log::channel('trace')->error('UnifiedMessageProcessor: Message processing failed', [
                 ...$logContext,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
+
             return null;
         }
     }
 
     /**
      * Process message for Premium users with multi-action support
-     *
-     * @param User $user
-     * @param string $messageContent
-     * @param array $rawData
-     * @param string $channelType
-     * @param string $identifier
-     * @param string $correlationId
-     * @param array $logContext
-     * @return IncomingMessage|null
      */
     private function processPremiumMessage(
         User $user,
@@ -128,10 +116,11 @@ readonly class UnifiedMessageProcessorService
             if (empty($triagedActions)) {
                 Log::warning('Premium AI triage failed - falling back to Free flow', [
                     ...$logContext,
-                    'ai_response' => $triagedActions
+                    'ai_response' => $triagedActions,
                 ]);
                 $incomingMessage = $this->processFreeMessage($user, $messageContent, $rawData, $channelType, $identifier, $correlationId, $logContext);
                 $this->sendFallbackMessage($channelType, $identifier, $correlationId);
+
                 return $incomingMessage;
             }
 
@@ -146,7 +135,7 @@ readonly class UnifiedMessageProcessorService
                 $logContext
             );
 
-            if (!$incomingMessage) {
+            if (! $incomingMessage) {
                 return null;
             }
 
@@ -182,7 +171,7 @@ readonly class UnifiedMessageProcessorService
                         $noteTitle = $this->generateNoteTitle($actionText, Note::TYPE_TASK, $canUseAI, $logContext);
                         $metadata = $taskDetails ? [
                             'due_date' => $taskDetails['due_date'] ?? null,
-                            'due_time' => $taskDetails['due_time'] ?? null
+                            'due_time' => $taskDetails['due_time'] ?? null,
                         ] : null;
                         $noteContent = $taskDetails['message'] ?? $actionText;
                         $note = $this->createNote($user->id, $incomingMessage->id, $noteTitle, $noteContent, Note::TYPE_TASK, $metadata, $rawData, $logContext);
@@ -191,7 +180,7 @@ readonly class UnifiedMessageProcessorService
                     case 'idea':
                     case 'simple':
                     default: // Tratează tipurile necunoscute ca notițe simple
-                        $noteTypeConstant = match($actionType) {
+                        $noteTypeConstant = match ($actionType) {
                             'idea' => Note::TYPE_IDEA,
                             default => Note::TYPE_SIMPLE,
                         };
@@ -206,8 +195,9 @@ readonly class UnifiedMessageProcessorService
             }
 
             if (empty($createdNotes)) {
-                 Log::warning('Premium processing finished with no notes created, falling back.', $logContext);
-                 return $this->processFreeMessage($user, $messageContent, $rawData, $channelType, $identifier, $correlationId, $logContext);
+                Log::warning('Premium processing finished with no notes created, falling back.', $logContext);
+
+                return $this->processFreeMessage($user, $messageContent, $rawData, $channelType, $identifier, $correlationId, $logContext);
             }
 
             // Trimite mesajul de confirmare sumar
@@ -219,7 +209,7 @@ readonly class UnifiedMessageProcessorService
             Log::channel('trace')->info('UnifiedMessageProcessor: Premium Hybrid message processing completed successfully', [
                 ...$logContext,
                 'incoming_message_id' => $incomingMessage->id,
-                'notes_created' => count($createdNotes)
+                'notes_created' => count($createdNotes),
             ]);
 
             return $incomingMessage;
@@ -228,23 +218,15 @@ readonly class UnifiedMessageProcessorService
             Log::channel('trace')->error('UnifiedMessageProcessor: Premium message processing failed', [
                 ...$logContext,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
+
             return null;
         }
     }
 
     /**
      * Process message for Free users using existing logic
-     *
-     * @param User $user
-     * @param string $messageContent
-     * @param array $rawData
-     * @param string $channelType
-     * @param string $identifier
-     * @param string $correlationId
-     * @param array $logContext
-     * @return IncomingMessage|null
      */
     private function processFreeMessage(
         User $user,
@@ -284,7 +266,7 @@ readonly class UnifiedMessageProcessorService
                 if ($taskDetails) {
                     $metadata = [
                         'due_date' => $taskDetails['due_date'] ?? null,
-                        'due_time' => $taskDetails['due_time'] ?? null
+                        'due_time' => $taskDetails['due_time'] ?? null,
                     ];
                     $noteContent = $taskDetails['message'] ?? $messageContent;
                 }
@@ -301,7 +283,7 @@ readonly class UnifiedMessageProcessorService
                 $logContext
             );
 
-            if (!$incomingMessage) {
+            if (! $incomingMessage) {
                 return null;
             }
 
@@ -320,7 +302,7 @@ readonly class UnifiedMessageProcessorService
                 $logContext
             );
 
-            if (!$note) {
+            if (! $note) {
                 return null;
             }
 
@@ -338,7 +320,7 @@ readonly class UnifiedMessageProcessorService
             Log::channel('trace')->info('UnifiedMessageProcessor: Free message processing completed successfully', [
                 ...$logContext,
                 'incoming_message_id' => $incomingMessage->id,
-                'note_id' => $note->id
+                'note_id' => $note->id,
             ]);
 
             return $incomingMessage;
@@ -347,22 +329,15 @@ readonly class UnifiedMessageProcessorService
             Log::channel('trace')->error('UnifiedMessageProcessor: Free message processing failed', [
                 ...$logContext,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
+
             return null;
         }
     }
 
-    
-
     /**
      * Send premium confirmation message with summary
-     *
-     * @param string $channelType
-     * @param string $identifier
-     * @param array $createdNotes
-     * @param string $correlationId
-     * @return void
      */
     private function sendPremiumConfirmation(
         string $channelType,
@@ -380,7 +355,7 @@ readonly class UnifiedMessageProcessorService
             // Build summary message
             $summaryParts = [];
             foreach ($notesByType as $type => $count) {
-                $typeLabel = match($type) {
+                $typeLabel = match ($type) {
                     Note::TYPE_REMINDER => $count === 1 ? 'reminder' : 'reminder-uri',
                     Note::TYPE_TASK => $count === 1 ? 'task' : 'task-uri',
                     Note::TYPE_SHOPING_LIST => 'listă de cumpărături',
@@ -403,18 +378,13 @@ readonly class UnifiedMessageProcessorService
                 'correlation_id' => $correlationId,
                 'channel' => $channelType,
                 'identifier' => $identifier,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
 
     /**
      * Send fallback message when Premium processing fails
-     *
-     * @param string $channelType
-     * @param string $identifier
-     * @param string $correlationId
-     * @return void
      */
     private function sendFallbackMessage(
         string $channelType,
@@ -422,24 +392,20 @@ readonly class UnifiedMessageProcessorService
         string $correlationId
     ): void {
         try {
-            $message = "⚠️ Am întâmpinat o problemă la procesarea avansată și am salvat doar prima acțiune. Dacă problema persistă, te rog contactează suportul.";
+            $message = '⚠️ Am întâmpinat o problemă la procesarea avansată și am salvat doar prima acțiune. Dacă problema persistă, te rog contactează suportul.';
             $this->notificationService->sendCustomMessage($channelType, $identifier, $message, $correlationId);
         } catch (\Exception $e) {
             Log::channel('trace')->warning('Failed to send fallback message', [
                 'correlation_id' => $correlationId,
                 'channel' => $channelType,
                 'identifier' => $identifier,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
 
     /**
      * Find user by channel-specific identifier
-     *
-     * @param string $channelType
-     * @param string $identifier
-     * @return User|null
      */
     private function findUserByChannel(string $channelType, string $identifier): ?User
     {
@@ -452,10 +418,6 @@ readonly class UnifiedMessageProcessorService
 
     /**
      * Extract shopping list metadata using AI
-     *
-     * @param string $messageContent
-     * @param array $logContext
-     * @return array|null
      */
     private function extractShoppingListMetadata(string $messageContent, array $logContext): ?array
     {
@@ -467,8 +429,9 @@ readonly class UnifiedMessageProcessorService
             $metadata = ['items' => $items];
             Log::channel('trace')->info('UnifiedMessageProcessor: Shopping list items extracted', [
                 ...$logContext,
-                'items' => $items
+                'items' => $items,
             ]);
+
             return $metadata;
         }
 
@@ -477,10 +440,6 @@ readonly class UnifiedMessageProcessorService
 
     /**
      * Extract reminder metadata using AI
-     *
-     * @param string $messageContent
-     * @param array $logContext
-     * @return array|null
      */
     private function extractReminderMetadata(string $messageContent, array $logContext): ?array
     {
@@ -491,8 +450,9 @@ readonly class UnifiedMessageProcessorService
         if ($reminderDetails) {
             Log::channel('trace')->info('UnifiedMessageProcessor: Reminder details extracted', [
                 ...$logContext,
-                'details' => $reminderDetails
+                'details' => $reminderDetails,
             ]);
+
             return $reminderDetails;
         }
 
@@ -501,15 +461,6 @@ readonly class UnifiedMessageProcessorService
 
     /**
      * Save incoming message to database
-     *
-     * @param int $userId
-     * @param string $channelType
-     * @param string $identifier
-     * @param string $messageContent
-     * @param array $rawData
-     * @param string $noteType
-     * @param array $logContext
-     * @return IncomingMessage|null
      */
     private function saveIncomingMessage(
         int $userId,
@@ -535,12 +486,12 @@ readonly class UnifiedMessageProcessorService
                 'metadata' => json_encode($rawData),
                 'is_processed' => true,
                 'processed_at' => now(),
-                'ai_tag' => $noteType
+                'ai_tag' => $noteType,
             ]);
 
             Log::channel('trace')->info('UnifiedMessageProcessor: Incoming message saved', [
                 ...$logContext,
-                'incoming_message_id' => $incomingMessage->id
+                'incoming_message_id' => $incomingMessage->id,
             ]);
 
             return $incomingMessage;
@@ -548,20 +499,15 @@ readonly class UnifiedMessageProcessorService
         } catch (\Exception $e) {
             Log::channel('trace')->error('UnifiedMessageProcessor: Failed to save incoming message', [
                 ...$logContext,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
 
     /**
      * Generate note title using AI or fallback
-     *
-     * @param string $messageContent
-     * @param string $noteType
-     * @param bool $canUseAI
-     * @param array $logContext
-     * @return string
      */
     private function generateNoteTitle(
         string $messageContent,
@@ -576,13 +522,13 @@ readonly class UnifiedMessageProcessorService
             $noteTitle = $this->geminiService->generateNoteTitle($messageContent, $noteType);
         }
 
-        if (!$noteTitle) {
+        if (! $noteTitle) {
             $noteTitle = Str::limit($messageContent, 20);
             Log::channel('trace')->info('UnifiedMessageProcessor: Using fallback for note title', $logContext);
         } else {
             Log::channel('trace')->info('UnifiedMessageProcessor: Note title generated', [
                 ...$logContext,
-                'note_title' => $noteTitle
+                'note_title' => $noteTitle,
             ]);
         }
 
@@ -591,16 +537,6 @@ readonly class UnifiedMessageProcessorService
 
     /**
      * Create note in database
-     *
-     * @param int $userId
-     * @param int $incomingMessageId
-     * @param string $noteTitle
-     * @param string $noteContent
-     * @param string $noteType
-     * @param array|null $metadata
-     * @param array $rawData
-     * @param array $logContext
-     * @return Note|null
      */
     private function createNote(
         int $userId,
@@ -628,7 +564,7 @@ readonly class UnifiedMessageProcessorService
 
             Log::channel('trace')->info('UnifiedMessageProcessor: Note created successfully', [
                 ...$logContext,
-                'note_id' => $note->id
+                'note_id' => $note->id,
             ]);
 
             return $note;
@@ -636,20 +572,15 @@ readonly class UnifiedMessageProcessorService
         } catch (\Exception $e) {
             Log::channel('trace')->error('UnifiedMessageProcessor: Failed to create note', [
                 ...$logContext,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
 
     /**
      * Create reminder in database
-     *
-     * @param int $noteId
-     * @param array $reminderDetails
-     * @param string $channelType
-     * @param array $logContext
-     * @return void
      */
     private function createReminder(
         int $noteId,
@@ -672,19 +603,13 @@ readonly class UnifiedMessageProcessorService
         } catch (\Exception $e) {
             Log::channel('trace')->error('UnifiedMessageProcessor: Failed to create reminder', [
                 ...$logContext,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
 
     /**
      * Send note creation confirmation to user
-     *
-     * @param string $channelType
-     * @param string $identifier
-     * @param Note $note
-     * @param string $correlationId
-     * @return void
      */
     private function sendNoteCreationConfirmation(
         string $channelType,
@@ -706,17 +631,13 @@ readonly class UnifiedMessageProcessorService
                 'channel' => $channelType,
                 'identifier' => $identifier,
                 'note_id' => $note->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
 
     /**
      * Extract task metadata including due date
-     *
-     * @param string $messageContent
-     * @param array $logContext
-     * @return array|null
      */
     private function extractTaskMetadata(string $messageContent, array $logContext): ?array
     {
@@ -725,19 +646,20 @@ readonly class UnifiedMessageProcessorService
         if ($taskDetails) {
             Log::channel('trace')->info('UnifiedMessageProcessor: Task details extracted', [
                 ...$logContext,
-                'details' => $taskDetails
+                'details' => $taskDetails,
             ]);
+
             return $taskDetails;
         }
 
         Log::channel('trace')->info('UnifiedMessageProcessor: No task details extracted', $logContext);
+
         return null;
     }
 
     /**
      * Extract message date from raw webhook data
      *
-     * @param array $rawData
      * @return int|null Unix timestamp
      */
     private function extractMessageDate(array $rawData): ?int
@@ -753,5 +675,38 @@ readonly class UnifiedMessageProcessorService
         }
 
         return null;
+    }
+
+    /**
+     * Send user not found message with instructions to register
+     */
+    private function sendUserNotFoundMessage(
+        string $channelType,
+        string $identifier,
+        string $correlationId
+    ): void {
+        try {
+            $message = "🚫 Hello! Your account was not found in our system.\n\n".
+                       "🔗 Please create an account at micronoteapp.com and follow the linking instructions for your messaging channel.\n\n".
+                       "---\n\n".
+                       "🚫 Salut! Contul tău nu a fost găsit în sistemul nostru.\n\n".
+                       '🔗 Te rog să îți creezi un cont la micronoteapp.com și să urmezi instrucțiunile de conectare pentru canalul tău de comunicare.';
+
+            $this->notificationService->sendCustomMessage($channelType, $identifier, $message, $correlationId);
+
+            Log::channel('trace')->info('UnifiedMessageProcessor: User not found message sent', [
+                'correlation_id' => $correlationId,
+                'channel' => $channelType,
+                'identifier' => $identifier,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::channel('trace')->warning('UnifiedMessageProcessor: Failed to send user not found message', [
+                'correlation_id' => $correlationId,
+                'channel' => $channelType,
+                'identifier' => $identifier,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

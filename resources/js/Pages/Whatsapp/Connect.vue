@@ -6,7 +6,7 @@ import InputError from '@/Components/InputError.vue';
 const { t } = useI18n();
 
 const form = useForm({
-    wa_id: '',
+    whatsapp_id: '',
 });
 
 const submit = () => {
@@ -39,11 +39,11 @@ const submit = () => {
 
                 <form @submit.prevent="submit">
                     <div class="mb-6">
-                        <label for="wa_id" class="block text-sm font-medium text-green-100 mb-2">{{ t('connect_page.form_label_whatsapp') }}</label>
-                        <input id="wa_id" type="text" v-model="form.wa_id" required autofocus
+                        <label for="whatsapp_id" class="block text-sm font-medium text-green-100 mb-2">{{ t('connect_page.form_label_whatsapp') }}</label>
+                        <input id="whatsapp_id" type="text" v-model="form.whatsapp_id" required autofocus
                                :placeholder="t('connect_page.form_placeholder')"
                                class="w-full px-4 py-3 bg-slate-800/60 border-2 border-slate-700 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition text-white placeholder-slate-400" />
-                        <InputError class="mt-2" :message="form.errors.wa_id" />
+                        <InputError class="mt-2" :message="form.errors.whatsapp_id" />
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">

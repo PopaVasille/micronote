@@ -3,25 +3,21 @@
 namespace App\Notifications;
 
 use App\Notifications\Channels\TelegramMessageChannel;
+use App\Notifications\Channels\WhatsAppMessageChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
-use NotificationChannels\WhatsApp\WhatsAppChannel;
-use NotificationChannels\WhatsApp\WhatsAppTextMessage;
 
 class AccountLinkedWelcomeNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Get the notification's delivery channels.
      *
      * @param  mixed  $notifiable
-     * @return array
      */
     public function via($notifiable): array
     {
@@ -35,7 +31,7 @@ class AccountLinkedWelcomeNotification extends Notification implements ShouldQue
             $channels[] = TelegramMessageChannel::class;
         }
         if ($notifiable->whatsapp_id) {
-            $channels[] = WhatsAppChannel::class;
+            $channels[] = WhatsAppMessageChannel::class;
         }
 
         return $channels;
@@ -45,7 +41,6 @@ class AccountLinkedWelcomeNotification extends Notification implements ShouldQue
      * Get the Telegram representation of the notification.
      *
      * @param  mixed  $notifiable
-     * @return string
      */
     public function toTelegram($notifiable): string
     {
@@ -56,15 +51,14 @@ class AccountLinkedWelcomeNotification extends Notification implements ShouldQue
      * Get the WhatsApp representation of the notification.
      *
      * @param  mixed  $notifiable
-     * @return WhatsAppTextMessage
      */
-    public function toWhatsApp($notifiable): WhatsAppTextMessage
+    public function toWhatsApp($notifiable): string
     {
         // Strip markdown for WhatsApp, which uses a different syntax
         $message = __('bot.welcome_message');
-        $message = str_replace("**", "*", $message);
-        $message = str_replace("__", "_", $message);
+        $message = str_replace('**', '*', $message);
+        $message = str_replace('__', '_', $message);
 
-        return WhatsAppTextMessage::create()->message($message);
+        return $message;
     }
 }

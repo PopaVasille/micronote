@@ -34,7 +34,7 @@ class User extends Authenticatable
         'notes_count',
         'daily_summary_enabled',
         'daily_summary_time',
-        'daily_summary_timezone'
+        'daily_summary_timezone',
     ];
 
     /**
@@ -72,6 +72,7 @@ class User extends Authenticatable
             $model->notes_count = 0;
         });
     }
+
     public function notes(): User|HasMany
     {
         return $this->hasMany(Note::class);
@@ -84,8 +85,6 @@ class User extends Authenticatable
 
     /**
      * Check if user has a premium plan
-     *
-     * @return bool
      */
     public function isPremium(): bool
     {
@@ -96,10 +95,19 @@ class User extends Authenticatable
      * Route notifications for the Telegram channel.
      *
      * @param  \Illuminate\Notifications\Notification  $notification
-     * @return string|null
      */
     public function routeNotificationForTelegram($notification): ?string
     {
         return $this->telegram_id;
+    }
+
+    /**
+     * Route notifications for the WhatsApp channel.
+     *
+     * @param  \Illuminate\Notifications\Notification  $notification
+     */
+    public function routeNotificationForWhatsapp($notification): ?string
+    {
+        return $this->whatsapp_id;
     }
 }
