@@ -18,6 +18,8 @@ createInertiaApp({
             .use(ZiggyVue)
             .use(i18n);
 
+        console.log('DEBUG I18N MESSAGES:', JSON.stringify(i18n.global.messages.value));
+
         // Initialize locale from localStorage or server props
         const storedLocale = localStorage.getItem('selected_locale');
         const serverLocale = props.initialPage.props.locale;
