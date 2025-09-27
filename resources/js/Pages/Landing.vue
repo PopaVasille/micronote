@@ -6,28 +6,8 @@ import LanguageSwitcher from '@/Components/LanguageSwitcher.vue';
 
 const { t, tm } = useI18n();
 
-// Debug vizual pentru staging
-// Debug vizual care se va vedea pe staging
-const setupDebug = () => {
-    // Debug info în DOM
-    setTimeout(() => {
-        const { locale } = useI18n();
-        const debugInfo = document.createElement('div');
-        debugInfo.style.cssText = 'position:fixed;top:40px;left:0;background:blue;color:white;padding:5px;z-index:9999;font-size:12px;max-width:400px;';
-        debugInfo.innerHTML = `
-            Landing Debug:<br>
-            Locale: ${locale.value}<br>
-            landing.title: "${t('landing.title')}"<br>
-            landing.hero_title_1: "${t('landing.hero_title_1')}"<br>
-            common.features: "${t('common.features')}"<br>
-            Available in window.debugI18n: ${window.debugI18n ? 'YES' : 'NO'}
-        `;
-        document.body.appendChild(debugInfo);
-
-        // Auto-remove după 15 secunde
-        setTimeout(() => debugInfo.remove(), 15000);
-    }, 2000);
-};
+// Debug pentru development - comentat pentru production
+// const setupDebug = () => { /* debug code */ };
 
 const props = defineProps({
     canLogin: Boolean,
@@ -53,8 +33,8 @@ onMounted(() => {
         activeFeature.value = (activeFeature.value + 1) % 3;
     }, 3000);
 
-    // Adaugă debug-ul vizual
-    setupDebug();
+    // Debug vizual dezactivat pentru production
+    // setupDebug();
 });
 
 const features = computed(() => tm('landing.features'));
