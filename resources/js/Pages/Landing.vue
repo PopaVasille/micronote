@@ -6,6 +6,11 @@ import LanguageSwitcher from '@/Components/LanguageSwitcher.vue';
 
 const { t, tm } = useI18n();
 
+// Debug translation loading
+console.log('Landing page - current locale:', useI18n().locale.value);
+console.log('Landing page - trying landing.title:', t('landing.title'));
+console.log('Landing page - trying common.features:', t('common.features'));
+
 const props = defineProps({
     canLogin: Boolean,
     canRegister: Boolean,

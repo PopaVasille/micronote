@@ -39,6 +39,7 @@ function loadLocaleMessages() {
             }
         }
     }
+    console.log('Loaded locale messages:', messages);
     return messages;
 }
 
