@@ -39,7 +39,27 @@ function loadLocaleMessages() {
             }
         }
     }
-    console.log('Loaded locale messages:', messages);
+    // Debug în DOM pentru staging
+    if (typeof window !== 'undefined') {
+        window.debugI18n = {
+            messages: messages,
+            loadedKeys: Object.keys(messages),
+            enKeys: messages.en ? Object.keys(messages.en) : [],
+            roKeys: messages.ro ? Object.keys(messages.ro) : []
+        };
+
+        // Afișează info debug în header-ul paginii pentru staging
+        setTimeout(() => {
+            const debugDiv = document.createElement('div');
+            debugDiv.id = 'i18n-debug';
+            debugDiv.style.cssText = 'position:fixed;top:0;left:0;background:red;color:white;padding:5px;z-index:9999;font-size:12px;';
+            debugDiv.innerHTML = `Debug: Locales loaded: ${Object.keys(messages).join(', ')} | EN Keys: ${messages.en ? Object.keys(messages.en).length : 0} | RO Keys: ${messages.ro ? Object.keys(messages.ro).length : 0}`;
+            document.body.appendChild(debugDiv);
+
+            // Auto-remove după 10 secunde
+            setTimeout(() => debugDiv.remove(), 10000);
+        }, 1000);
+    }
     return messages;
 }
 
