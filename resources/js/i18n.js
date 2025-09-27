@@ -11,7 +11,7 @@ function loadLocaleMessages() {
             const locale = matched[1];
             // Ensure we only process main files here, not terms or privacy files
             if ((locale === 'en' || locale === 'ro') && !path.includes('terms.') && !path.includes('privacy.')) {
-                messages[locale] = mainLocales[path];
+                messages[locale] = mainLocales[path].default;
             }
         }
     }
@@ -23,7 +23,7 @@ function loadLocaleMessages() {
         if (matched && matched.length > 1) {
             const locale = matched[1]; // 'en' or 'ro'
             if (messages[locale]) {
-                messages[locale].terms = termsLocales[path];
+                messages[locale].terms = termsLocales[path].default;
             }
         }
     }
@@ -35,7 +35,7 @@ function loadLocaleMessages() {
         if (matched && matched.length > 1) {
             const locale = matched[1]; // 'en' or 'ro'
             if (messages[locale]) {
-                messages[locale].privacy = privacyLocales[path];
+                messages[locale].privacy = privacyLocales[path].default;
             }
         }
     }
