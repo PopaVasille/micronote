@@ -1,0 +1,11 @@
+# .buildpacks
+
+# Aceasta specifică Buildpack-ului PHP să includă bcmath, gd (pentru imagini, vezi documentația ta)
+# și pdo_mysql (pentru baza de date), etc.
+
+php-8.3:
+    extensions:
+        - bcmath
+        - pdo_mysql # Necesara pentru DB connection
+        - gd        # Utila daca procesezi imagini sau grafice
+        - intl      # Utila pentru i18n
